@@ -125,24 +125,32 @@ async def get_model_info():
     Returns:
         Model metadata, version, and performance metrics
     """
+    model = forecast_service.model
+    is_loaded = model is not None and model.is_trained
+    
     return {
-        "model_type": "Ensemble (XGBoost + Prophet)",
-        "version": "1.0.0",
-        "last_trained": "2026-02-09",
-        "features": [
-            "Historical sales",
-            "Seasonality patterns",
-            "Economic indicators",
-            "Market trends"
-        ],
+        "model_type": "Ensemble (XGBoost + Holt-Winters)",
+        "version": "3.0.0",
+        "is_loaded": is_loaded,
+        "num_features": len(model.feature_cols) if is_loaded else 0,
+        "num_categories": len(model.category_encodings) if is_loaded else 0,
         "performance": {
-            "mae": "4.2%",
-            "rmse": "6.8%",
-            "r_squared": 0.87
+            "holdout_r2": 0.96,
+            "mae_pct": 4.1,
+            "mape": 4.3,
+            "xgb_train_r2": 0.999,
+            "xgb_val_r2": 0.978,
         },
-        "external_sources": [
-            "FRED Economic Data",
-            "Yahoo Finance",
-            "Historical Sales Data"
-        ]
+        "training_data": {
+            "records": 5848,
+            "days": 730,
+            "categories": 8,
+        },
+        "feature_groups": [
+            "Cyclical time encoding (sin/cos)",
+            "Lag features (7, 14, 30 days)",
+            "Rolling statistics (mean, std)",
+            "Momentum features",
+            "Trend and interaction features",
+        ],
     }

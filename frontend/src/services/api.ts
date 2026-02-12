@@ -98,8 +98,29 @@ export class ForecastService {
     return response.data.categories;
   }
 
-  async getModelInfo(): Promise<any> {
+  async getModelInfo(): Promise<ModelInfo> {
     const response = await this.client.get('/forecast/model-info');
     return response.data;
   }
+}
+
+export interface ModelInfo {
+  model_type: string;
+  version: string;
+  is_loaded: boolean;
+  num_features: number;
+  num_categories: number;
+  performance: {
+    holdout_r2: number;
+    mae_pct: number;
+    mape: number;
+    xgb_train_r2: number;
+    xgb_val_r2: number;
+  };
+  training_data: {
+    records: number;
+    days: number;
+    categories: number;
+  };
+  feature_groups: string[];
 }

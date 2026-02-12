@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './Dashboard.css';
-import { ForecastService, CategoryForecast } from '../services/api';
+import { ForecastService, CategoryForecast, ModelInfo } from '../services/api';
 import CategoryCard from './CategoryCard';
 import ForecastChart from './ForecastChart';
 import TopProducts from './TopProducts';
@@ -12,6 +12,7 @@ const Dashboard: React.FC = () => {
   const [categories, setCategories] = useState<CategoryForecast[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [modelInfo, setModelInfo] = useState<ModelInfo | null>(null);
   const selectedRef = useRef(selectedCategory);
   selectedRef.current = selectedCategory;
 
@@ -32,6 +33,12 @@ const Dashboard: React.FC = () => {
   useEffect(() => {
     loadForecasts();
   }, [loadForecasts]);
+
+  useEffect(() => {
+    forecastService.getModelInfo()
+      .then(info => setModelInfo(info))
+      .catch(err => console.error('Error loading model info:', err));
+  }, []);
 
   const handleTimePeriodChange = (period: string) => {
     setTimePeriod(period);
@@ -104,8 +111,9 @@ const Dashboard: React.FC = () => {
 
       <footer className="footer-info" role="contentinfo">
         <p>
-          Powered by ensemble ML model (XGBoost + Holt-Winters) |
-          Model Accuracy: 82% |
+          Powered by {modelInfo ? modelInfo.model_type : 'ensemble ML model'} v{modelInfo ? modelInfo.version : '...'} |
+          Model Accuracy: {modelInfo ? `${Math.round(modelInfo.performance.holdout_r2 * 100)}% R²` : 'Loading...'} |
+          Features: {modelInfo ? modelInfo.num_features : '...'} |
           Last Updated: {new Date().toLocaleDateString()}
         </p>
       </footer>
