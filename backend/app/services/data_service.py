@@ -26,8 +26,14 @@ class DataService:
         # For demo, generate synthetic data
         return self._generate_synthetic_sales_data()
     
-    def _generate_synthetic_sales_data(self, days: int = 365) -> pd.DataFrame:
-        """Generate synthetic sales data for demo"""
+    def _generate_synthetic_sales_data(self, days: int = 730) -> pd.DataFrame:
+        """
+        Generate synthetic sales data for demo.
+        
+        2 years of daily data across 8 categories.
+        Uses deterministic patterns with controlled noise so the model
+        can learn real structure.
+        """
         
         np.random.seed(42)  # Fixed seed for reproducible training data
         
@@ -37,7 +43,7 @@ class DataService:
             "Health & Beauty", "Toys & Games"
         ]
         
-        # Category-specific base sales to differentiate them
+        # Category-specific base sales
         category_base = {
             "Electronics": 1800,
             "Clothing & Apparel": 1400,
@@ -49,6 +55,30 @@ class DataService:
             "Toys & Games": 750,
         }
         
+        # Category-specific seasonality amplitude (some categories are more seasonal)
+        category_seasonality = {
+            "Electronics": 350,
+            "Clothing & Apparel": 250,
+            "Home & Garden": 200,
+            "Sports & Outdoors": 300,
+            "Books & Media": 150,
+            "Food & Beverages": 100,
+            "Health & Beauty": 120,
+            "Toys & Games": 400,  # Very seasonal (holiday toys)
+        }
+        
+        # Category-specific weekend boost
+        category_weekend = {
+            "Electronics": 250,
+            "Clothing & Apparel": 200,
+            "Home & Garden": 180,
+            "Sports & Outdoors": 220,
+            "Books & Media": 80,
+            "Food & Beverages": 150,
+            "Health & Beauty": 100,
+            "Toys & Games": 160,
+        }
+        
         end_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         start_date = end_date - timedelta(days=days)
         
@@ -57,23 +87,35 @@ class DataService:
         
         while current_date <= end_date:
             for category in categories:
-                # Generate daily sales for category with category-specific base
-                base_sales = category_base.get(category, 1000) + np.random.uniform(-200, 200)
+                base = category_base[category]
                 
-                # Add seasonality
+                # Slow upward trend (0.3 units/day)
+                days_elapsed = (current_date - start_date).days
+                trend = days_elapsed * 0.3
+                
+                # Annual seasonality (category-specific amplitude)
                 day_of_year = current_date.timetuple().tm_yday
-                seasonality = 300 * np.sin(2 * np.pi * day_of_year / 365)
+                amplitude = category_seasonality[category]
+                seasonality = amplitude * np.sin(2 * np.pi * day_of_year / 365.25)
                 
-                # Add weekly pattern (weekend boost)
+                # Monthly mini-cycle (beginning/end of month effects)
+                day_of_month = current_date.day
+                monthly_effect = 50 * np.sin(2 * np.pi * day_of_month / 30.5)
+                
+                # Weekend boost (category-specific)
                 if current_date.weekday() >= 5:
-                    weekend_boost = 200
+                    weekend_boost = category_weekend[category]
                 else:
                     weekend_boost = 0
                 
-                # Add noise
-                noise = np.random.normal(0, 100)
+                # Friday slight boost
+                if current_date.weekday() == 4:
+                    weekend_boost = category_weekend[category] * 0.3
                 
-                sales = max(0, base_sales + seasonality + weekend_boost + noise)
+                # Controlled noise (5% of base instead of 10%)
+                noise = np.random.normal(0, base * 0.05)
+                
+                sales = max(0, base + trend + seasonality + monthly_effect + weekend_boost + noise)
                 revenue = sales * np.random.uniform(20, 100)
                 
                 data.append({

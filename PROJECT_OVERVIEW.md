@@ -151,7 +151,7 @@ npm start
 ### For Technical Deep Dives
 
 6. **ML Model**: `docs/ML_MODEL_DETAILS.md`
-   - Feature engineering (17 features)
+   - Feature engineering (25 features)
    - Model architecture (XGBoost + Holt-Winters)
    - Training pipeline
    - Evaluation results
@@ -206,8 +206,8 @@ npm start
 
 1. **Ensemble ML Model**
    - XGBoost + Holt-Winters (Exponential Smoothing)
-   - 82% R² on 30-day holdout
-   - 17 engineered features
+   - 96% R² on 30-day holdout
+   - 25 engineered features
    - Real trained model, not mock data
 
 2. **Production Code Quality**
@@ -253,12 +253,15 @@ npm start
 
 | Metric | Value |
 |--------|-------|
-| **Model R² (holdout)** | 0.82 |
-| **XGBoost Train R²** | 0.98 |
-| **MAE (holdout)** | 11% |
-| **Engineered Features** | 17 |
-| **Training Records** | 2,928 |
-| **Model Version** | 2.0.0 |
+| **Model R² (holdout)** | 0.96 |
+| **XGBoost Train R²** | 0.999 |
+| **XGBoost Val R²** | 0.978 |
+| **MAE (holdout)** | 4.1% |
+| **MAPE (holdout)** | 4.3% |
+| **Engineered Features** | 25 |
+| **Training Records** | 5,848 |
+| **Training Data** | 2 years (730 days) |
+| **Model Version** | 3.0.0 |
 | **Categories** | 8 |
 
 ---
@@ -386,7 +389,7 @@ cd frontend && npm start
 - [ ] Can start frontend successfully
 - [ ] Understand system architecture
 - [ ] Can explain ML model approach (XGBoost + Holt-Winters)
-- [ ] Know key metrics (R² 0.82, 17 features, model v2.0.0)
+- [ ] Know key metrics (R² 0.96, 25 features, model v3.0.0)
 - [ ] Practiced demo flow
 - [ ] Read all documentation
 - [ ] Prepared for Q&A

@@ -70,7 +70,7 @@ The QuickBooks Commerce Sales Forecasting System is designed to predict top-sell
 │   FastAPI Service        │   │   FastAPI Service        │
 │   (Auto-scaling)         │   │   (Auto-scaling)         │
 │   - Forecast endpoints   │   │   - Forecast endpoints   │
-│   - Ensemble model v2.0  │   │   - Ensemble model v2.0  │
+│   - Ensemble model v3.0  │   │   - Ensemble model v3.0  │
 └──────────────────────────┘   └──────────────────────────┘
                 │                           │
                 └─────────────┬─────────────┘
@@ -115,8 +115,8 @@ The QuickBooks Commerce Sales Forecasting System is designed to predict top-sell
 
 #### 5. **ML Layer**
 - Ensemble model (XGBoost + Holt-Winters)
-- 17 engineered features
-- Model versioning (currently v2.0.0)
+- 25 engineered features
+- Model versioning (currently v3.0.0)
 - Training pipeline with holdout evaluation
 
 ## Component Design
@@ -147,14 +147,14 @@ The QuickBooks Commerce Sales Forecasting System is designed to predict top-sell
 
 ```python
 # Ensemble approach:
-1. XGBoost: Captures complex feature interactions (17 features)
+1. XGBoost: Captures complex feature interactions (25 features)
 2. Holt-Winters: Handles weekly seasonality per category
 3. Ensemble: 60% XGBoost + 40% Holt-Winters weighted average
 ```
 
 **Model Pipeline:**
 1. Data generation (synthetic, reproducible)
-2. Feature engineering (17 features)
+2. Feature engineering (25 features)
 3. Model training (XGBoost + Holt-Winters)
 4. Model evaluation (30-day holdout)
 5. Model serialization (joblib → ensemble_model.pkl)
@@ -187,10 +187,10 @@ Redis Cache Hierarchy:
 ```
 Synthetic Data Generation → Feature Engineering → Model Training → Evaluation → Save to disk
      │                           │                    │               │            │
-     └─ seed(42)                └─ 17 features       └─ XGBoost     └─ R² 0.82  └─ .pkl
-     └─ 8 categories            └─ lag, rolling      └─ Holt-Winters
-     └─ 1 year daily                                  └─ Ensemble
-     └─ 2,928 records
+     └─ seed(42)                └─ 25 features       └─ XGBoost     └─ R² 0.96  └─ .pkl
+     └─ 8 categories            └─ lag, rolling,     └─ Holt-Winters
+     └─ 2 years daily            cyclical, momentum  └─ Ensemble
+     └─ 5,848 records
 ```
 
 ### 2. Prediction Request Flow
@@ -221,8 +221,8 @@ Client → FastAPI → ForecastService → Load Model (if needed)
 
 1. **XGBoost Regressor**
    - Purpose: Capture non-linear patterns across all categories
-   - Features: 17 engineered features
-   - Hyperparameters: n_estimators=200, max_depth=6, learning_rate=0.05
+   - Features: 25 engineered features
+   - Hyperparameters: n_estimators=500, max_depth=7, min_child_weight=5, learning_rate=0.05
 
 2. **Holt-Winters (Exponential Smoothing)**
    - Purpose: Time-series seasonality per category
@@ -238,10 +238,12 @@ Client → FastAPI → ForecastService → Load Model (if needed)
 
 | Metric | Value |
 |--------|-------|
-| XGBoost Train R² | 0.983 |
-| Holdout R² | 0.823 |
-| Holdout MAE | ~11% |
-| Model Version | 2.0.0 |
+| XGBoost Train R² | 0.999 |
+| XGBoost Val R² | 0.978 |
+| Holdout R² | 0.96 |
+| Holdout MAE | 4.1% |
+| Holdout MAPE | 4.3% |
+| Model Version | 3.0.0 |
 
 ## API Design
 
@@ -263,8 +265,8 @@ GET /api/v1/forecast/categories
     - time_period: week|month|year
   Response:
     - predictions: CategoryForecast[]
-    - model_version: "2.0.0"
-    - accuracy_score: 0.82
+    - model_version: "3.0.0"
+    - accuracy_score: 0.96
 
 GET /api/v1/forecast/trends/{category}
   Path Parameters:
@@ -284,7 +286,7 @@ POST /api/v1/forecast/predict
   Response:
     - forecast_date: timestamp
     - predictions: CategoryForecast[]
-    - model_version: "2.0.0"
+    - model_version: "3.0.0"
 ```
 
 ## Scalability & Performance
@@ -383,7 +385,7 @@ Warning Alerts:
 ## Conclusion
 
 This system design provides a scalable, accessible, and accurate sales forecasting solution:
-- Trained ensemble model (XGBoost + Holt-Winters) with R² 0.82
+- Trained ensemble model (XGBoost + Holt-Winters) with R² 0.96
 - FastAPI backend with auto-generated docs
 - Intuit-themed, WCAG-accessible React frontend
 - Production-ready architecture design (AWS)

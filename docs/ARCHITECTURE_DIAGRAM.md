@@ -29,7 +29,7 @@
         │  ┌────────────────────┐  │  │  ┌────────────────────┐  │
         │  │ Forecast Service   │  │  │  │ Forecast Service   │  │
         │  │ Data Service       │  │  │  │ Data Service       │  │
-        │  │ ML Model (v2.0.0) │  │  │  │ ML Model (v2.0.0) │  │
+        │  │ ML Model (v3.0.0) │  │  │  │ ML Model (v3.0.0) │  │
         │  └────────────────────┘  │  │  └────────────────────┘  │
         └──────────────────────────┘  └──────────────────────────┘
                        │                             │
@@ -86,7 +86,7 @@
 │  - Weekend effects                                              │
 │  - Random noise for realism                                     │
 │  - np.random.seed(42) for reproducibility                       │
-│  - 1 year of daily data = 2,928 records                         │
+│  - 2 years of daily data = 5,848 records (730 days)             │
 └──────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -97,8 +97,8 @@
 │  - Lag features (lag_7, lag_14, lag_30)                [3]      │
 │  - Rolling stats (mean_7, mean_30, std_7, std_30)     [4]      │
 │  - Category encoding                                   [1]      │
-│  - Additional computed features                        [3]      │
-│  - Total: 17 features                                           │
+│  - Cyclical encoding (sin/cos), trend, momentum, interaction    │
+│  - Total: 25 features                                           │
 └──────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -110,8 +110,8 @@
 │  │   Training     │                  │   Training     │         │
 │  │                │                  │                │         │
 │  │ - All cats     │                  │ - Per category │         │
-│  │ - 17 features  │                  │ - Weekly seas. │         │
-│  │ - 200 trees    │                  │ - period=7     │         │
+│  │ - 25 features  │                  │ - Weekly seas. │         │
+│  │ - 500 trees    │                  │ - period=7     │         │
 │  └────────────────┘                  └────────────────┘         │
 │          │                                    │                 │
 │          └────────────────┬───────────────────┘                 │
@@ -129,8 +129,8 @@
 │                                                                  │
 │  - Holdout: last 30 days                                        │
 │  - Metrics: MAE, RMSE, R²                                      │
-│  - XGBoost Train R²: 0.983                                     │
-│  - Holdout R²: 0.823                                            │
+│  - XGBoost Train R²: 0.999, Val R²: 0.978                       │
+│  - Holdout R²: 0.96, MAE: 4.1%, MAPE: 4.3%                      │
 └──────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -174,7 +174,7 @@
 │  1. Load ensemble model (if not cached)  │
 │  2. Generate synthetic historical data   │
 │  3. Call model.predict()                 │
-│     - XGBoost: 17-feature prediction    │
+│     - XGBoost: 25-feature prediction    │
 │     - Holt-Winters: seasonal forecast   │
 │     - Ensemble: 60/40 weighted avg      │
 │  4. Post-process: confidence intervals   │
@@ -186,8 +186,8 @@
 │                                          │
 │  {                                       │
 │    products: [...],                      │
-│    model_version: "2.0.0",              │
-│    accuracy_score: 0.82                  │
+│    model_version: "3.0.0",              │
+│    accuracy_score: 0.96                 │
 │  }                                       │
 └──────────────────────────────────────────┘
        │

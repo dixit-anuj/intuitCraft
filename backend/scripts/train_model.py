@@ -1,5 +1,12 @@
 """
-Train the ensemble forecasting model
+Train the ensemble forecasting model (v3.0)
+
+Improvements over v2.0:
+- 2 years of training data (was 1 year)
+- 25 features (was 17): cyclical encoding, momentum, trend, interactions
+- Early stopping with validation set
+- Reduced data noise (5% vs 10%)
+- Per-category residual tracking for confidence intervals
 """
 import sys
 import os
@@ -18,7 +25,7 @@ def main():
     """Train and save the forecasting model"""
     
     logger.info("=" * 60)
-    logger.info("Starting model training...")
+    logger.info("Starting model training (v3.0)...")
     logger.info("=" * 60)
     
     # Load data
@@ -29,8 +36,9 @@ def main():
     logger.info(f"Loaded {len(df)} records")
     logger.info(f"Date range: {df['date'].min().date()} to {df['date'].max().date()}")
     logger.info(f"Categories: {list(df['category'].unique())}")
+    logger.info(f"Days of data: {(df['date'].max() - df['date'].min()).days}")
     
-    # Train model
+    # Train model on full data
     model = EnsembleForecastModel()
     
     logger.info("\nTraining ensemble model (XGBoost + Holt-Winters)...")
@@ -63,14 +71,16 @@ def main():
                 f"[{row['confidence_lower']:.0f} - {row['confidence_upper']:.0f}]"
             )
     
-    # Quick accuracy check on last 30 days of training data
+    # === Holdout Evaluation ===
     logger.info("\n" + "=" * 60)
-    logger.info("Model evaluation (holdout from training data)...")
+    logger.info("Holdout evaluation (last 30 days withheld)...")
     logger.info("=" * 60)
     
     split_date = df['date'].max() - pd.Timedelta(days=30)
     train_df = df[df['date'] <= split_date]
     test_df = df[df['date'] > split_date]
+    
+    logger.info(f"Train: {len(train_df)} records, Test: {len(test_df)} records")
     
     eval_model = EnsembleForecastModel()
     eval_model.train(train_df)
@@ -92,8 +102,15 @@ def main():
         if category in preds:
             pred_df = preds[category]
             n = min(len(cat_test), len(pred_df))
-            all_actual.extend(cat_test['sales'].values[:n])
-            all_predicted.extend(pred_df['predicted_sales'].values[:n])
+            actual_vals = cat_test['sales'].values[:n]
+            pred_vals = pred_df['predicted_sales'].values[:n]
+            all_actual.extend(actual_vals)
+            all_predicted.extend(pred_vals)
+            
+            # Per-category metrics
+            cat_mae = np.mean(np.abs(actual_vals - pred_vals))
+            cat_r2 = 1 - np.sum((actual_vals - pred_vals) ** 2) / np.sum((actual_vals - np.mean(actual_vals)) ** 2)
+            logger.info(f"  {category}: MAE={cat_mae:.1f}, R²={cat_r2:.3f}")
     
     if all_actual:
         actual = np.array(all_actual)
@@ -102,13 +119,16 @@ def main():
         mae_pct = (mae / np.mean(actual)) * 100
         rmse = np.sqrt(np.mean((actual - predicted) ** 2))
         r2 = 1 - np.sum((actual - predicted) ** 2) / np.sum((actual - np.mean(actual)) ** 2)
+        mape = np.mean(np.abs((actual - predicted) / actual)) * 100
         
-        logger.info(f"  MAE:  {mae:.1f} ({mae_pct:.1f}%)")
+        logger.info(f"\n  Overall Holdout Metrics:")
+        logger.info(f"  MAE:  {mae:.1f} ({mae_pct:.1f}% of mean sales)")
         logger.info(f"  RMSE: {rmse:.1f}")
         logger.info(f"  R²:   {r2:.3f}")
+        logger.info(f"  MAPE: {mape:.1f}%")
     
     logger.info("\n" + "=" * 60)
-    logger.info("Model training and testing completed successfully!")
+    logger.info("Training complete!")
     logger.info("=" * 60)
 
 

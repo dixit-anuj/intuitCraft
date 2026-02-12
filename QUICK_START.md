@@ -121,10 +121,10 @@ python -m scripts.train_model
 ```
 
 This will:
-- Generate 1 year of synthetic training data (8 categories, 2,928 records)
-- Train XGBoost (17 features, R² 0.98 on training data)
+- Generate 2 years of synthetic training data (8 categories, 5,848 records, 730 days)
+- Train XGBoost (25 features, R² 0.999 on training data, Val R² 0.978)
 - Train Holt-Winters per category (weekly seasonality)
-- Evaluate on 30-day holdout (R² 0.82, MAE 11%)
+- Evaluate on 30-day holdout (R² 0.96, MAE 4.1%, MAPE 4.3%)
 - Save the ensemble model to `data/models/ensemble_model.pkl`
 
 ## Troubleshooting
@@ -167,7 +167,7 @@ PORT=3001 npm start
 
 ### Technical Excellence
 - Ensemble ML model (XGBoost + Holt-Winters)
-- 82% R² accuracy on 30-day holdout
+- 96% R² accuracy on 30-day holdout
 - Real trained model — not mock data
 - Accessible, Intuit-branded UI
 

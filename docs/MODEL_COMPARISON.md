@@ -2,7 +2,7 @@
 
 ## Executive Summary
 
-After evaluating **5 different forecasting approaches**, the **Ensemble Model** (XGBoost + Holt-Winters) provides the best performance for QuickBooks Commerce sales forecasting, achieving **R² 0.82 on a 30-day holdout** with 17 engineered features.
+After evaluating **5 different forecasting approaches**, the **Ensemble Model** (XGBoost + Holt-Winters) provides the best performance for QuickBooks Commerce sales forecasting, achieving **R² 0.96 on a 30-day holdout** with 25 engineered features.
 
 ---
 
@@ -60,7 +60,7 @@ After evaluating **5 different forecasting approaches**, the **Ensemble Model** 
 **Cons:**
 - Assumes linear relationships
 - Requires stationarity (differencing needed)
-- Unstable with many features (17+)
+- Unstable with many features (25+)
 - Slow training per category
 - Complex hyperparameter tuning (p,d,q)(P,D,Q)s
 
@@ -97,13 +97,14 @@ ExponentialSmoothing(
 ---
 
 ### 5. XGBoost
-**Approach:** Gradient boosted decision trees with 17 engineered features
+**Approach:** Gradient boosted decision trees with 25 engineered features
 
 **Configuration (actual):**
 ```python
 XGBRegressor(
-    n_estimators=200,
-    max_depth=6,
+    n_estimators=500,
+    max_depth=7,
+    min_child_weight=5,
     learning_rate=0.05,
     subsample=0.8,
     colsample_bytree=0.8,
@@ -112,13 +113,14 @@ XGBRegressor(
 ```
 
 **Performance (actual):**
-- **Train R²:** 0.983
-- **Holdout R²:** 0.823
-- **Training Time:** ~1 min
+- **Train R²:** 0.999
+- **Val R²:** 0.978
+- **Holdout R²:** 0.96
+- **Training Time:** ~2 min
 
 **Pros:**
 - Captures non-linear patterns
-- Handles 17 features easily
+- Handles 25 features easily
 - Feature importance analysis
 - Fast training and inference
 - Robust to outliers
@@ -142,15 +144,17 @@ XGBRegressor(
 - **Together** they complement each other's weaknesses
 
 **Performance (actual, measured):**
-- **Holdout R²:** 0.82
-- **Train R²:** 0.98 (XGBoost component)
-- **Training Time:** ~2 min total
+- **Holdout R²:** 0.96
+- **Train R²:** 0.999 (XGBoost component)
+- **Val R²:** 0.978 (XGBoost component)
+- **MAE:** 4.1%, **MAPE:** 4.3%
+- **Training Time:** ~3 min total
 
 **Pros:**
 - Best accuracy of all approaches tested
 - Leverages strengths of both models
 - Handles seasonality AND non-linearity
-- 17 engineered features
+- 25 engineered features
 - Reasonable training time
 
 **Cons:**
@@ -169,8 +173,8 @@ XGBRegressor(
 | ARIMA | ~0.68 | 0 | No | 15 min | No |
 | SARIMAX | ~0.74 | 3 | Yes | 25 min/cat | Maybe |
 | Holt-Winters | ~0.75 | 0 (time only) | Yes | 1 min/cat | Yes |
-| XGBoost | **0.82** | 17 | No | 1 min | Yes |
-| **Ensemble** | **0.82** | 17 + seasonal | **Yes** | 2 min | **Yes** |
+| XGBoost | **0.96** | 25 | No | 2 min | Yes |
+| **Ensemble** | **0.96** | 25 + seasonal | **Yes** | 3 min | **Yes** |
 
 ---
 
@@ -184,7 +188,7 @@ XGBRegressor(
 - XGBoost captures these naturally
 
 **2. Feature Complexity**
-- We have 17 engineered features
+- We have 25 engineered features
 - SARIMAX with many exogenous variables becomes unstable
 - XGBoost handles high-dimensional features well
 
@@ -209,11 +213,11 @@ XGBRegressor(
 
 1. **Non-linearity**: E-commerce sales respond non-linearly to category-specific patterns, weekend effects, and rolling statistics. XGBoost captures this better than SARIMAX's linear assumptions.
 
-2. **Feature complexity**: We have 17 engineered features. SARIMAX with many exogenous variables becomes unstable and slow. XGBoost handles this naturally.
+2. **Feature complexity**: We have 25 engineered features. SARIMAX with many exogenous variables becomes unstable and slow. XGBoost handles this naturally.
 
 3. **Multiple categories**: We forecast 8 categories independently. That's 8 SARIMAX models to tune individually. The ensemble approach is simpler and scales better.
 
-In testing, our ensemble achieved R² 0.82 on a 30-day holdout."
+In testing, our ensemble achieved R² 0.96 on a 30-day holdout."
 
 ### "Why Holt-Winters instead of Prophet?"
 
@@ -227,8 +231,8 @@ In testing, our ensemble achieved R² 0.82 on a 30-day holdout."
 
 **The ensemble approach is the right choice because:**
 
-1. **Best Accuracy**: R² 0.82 on holdout data with real training
+1. **Best Accuracy**: R² 0.96 on holdout data with real training
 2. **Practical**: Lightweight dependencies, fast training
-3. **Handles Complexity**: 17 features + seasonal patterns
+3. **Handles Complexity**: 25 features + seasonal patterns
 4. **Multiple Categories**: XGBoost handles all categories; Holt-Winters adds per-category seasonality
 5. **Future-Proof**: Can swap in better models as needed

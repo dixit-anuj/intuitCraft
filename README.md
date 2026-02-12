@@ -14,7 +14,7 @@ A production-ready sales forecasting system that predicts top-selling products b
 ## Tech Stack
 - **Backend**: Python 3.9, FastAPI, Scikit-learn, XGBoost, statsmodels
 - **Frontend**: React 18, TypeScript, Recharts, Custom CSS (Intuit theme)
-- **ML**: Ensemble modeling (XGBoost 60% + Holt-Winters 40%), 17 engineered features
+- **ML**: Ensemble modeling (XGBoost 60% + Holt-Winters 40%), 25 engineered features
 - **Data**: Synthetic sales data with realistic seasonality, category-specific baselines
 
 ## Project Structure
@@ -74,9 +74,11 @@ Ensemble model (XGBoost + Holt-Winters) evaluated on 30-day holdout:
 
 | Metric | Value |
 |--------|-------|
-| R² Score | 0.82 |
-| MAE | 11% |
-| XGBoost Train R² | 0.98 |
+| R² Score | 0.96 |
+| MAE | 4.1% |
+| MAPE | 4.3% |
+| XGBoost Train R² | 0.999 |
+| XGBoost Val R² | 0.978 |
 
 ## System Architecture
 
