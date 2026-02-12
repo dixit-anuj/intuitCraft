@@ -17,7 +17,9 @@ from app.services.data_service import DataService
 def main():
     """Train and save the forecasting model"""
     
+    logger.info("=" * 60)
     logger.info("Starting model training...")
+    logger.info("=" * 60)
     
     # Load data
     data_service = DataService()
@@ -25,19 +27,13 @@ def main():
     df = data_service.preprocess_data(df)
     
     logger.info(f"Loaded {len(df)} records")
-    logger.info(f"Date range: {df['date'].min()} to {df['date'].max()}")
-    logger.info(f"Categories: {df['category'].unique()}")
-    
-    # Prepare for training
-    # Add required columns
-    df['product'] = df['category'] + '_product'
-    if 'revenue' not in df.columns:
-        df['revenue'] = df['sales'] * 50  # Mock price
+    logger.info(f"Date range: {df['date'].min().date()} to {df['date'].max().date()}")
+    logger.info(f"Categories: {list(df['category'].unique())}")
     
     # Train model
     model = EnsembleForecastModel()
     
-    logger.info("Training ensemble model...")
+    logger.info("\nTraining ensemble model (XGBoost + Holt-Winters)...")
     model.train(df)
     
     # Save model
@@ -45,21 +41,75 @@ def main():
     os.makedirs(model_path, exist_ok=True)
     model.save(model_path)
     
-    logger.info(f"Model training complete and saved to {model_path}")
+    logger.info(f"\nModel saved to {model_path}")
     
-    # Test prediction
+    # Test predictions
+    logger.info("\n" + "=" * 60)
     logger.info("Testing predictions...")
-    categories = df['category'].unique()[:3]
+    logger.info("=" * 60)
+    
+    categories = list(df['category'].unique())[:3]
     predictions = model.predict(
-        categories=list(categories),
-        time_period='month'
+        categories=categories,
+        time_period='week'
     )
     
     for category, pred_df in predictions.items():
         logger.info(f"\n{category} - Next 7 days forecast:")
-        logger.info(pred_df.head(7))
+        for _, row in pred_df.iterrows():
+            logger.info(
+                f"  {row['ds'].strftime('%Y-%m-%d')}: "
+                f"{row['predicted_sales']:.0f} units "
+                f"[{row['confidence_lower']:.0f} - {row['confidence_upper']:.0f}]"
+            )
     
-    logger.info("\nModel training and testing completed successfully!")
+    # Quick accuracy check on last 30 days of training data
+    logger.info("\n" + "=" * 60)
+    logger.info("Model evaluation (holdout from training data)...")
+    logger.info("=" * 60)
+    
+    split_date = df['date'].max() - pd.Timedelta(days=30)
+    train_df = df[df['date'] <= split_date]
+    test_df = df[df['date'] > split_date]
+    
+    eval_model = EnsembleForecastModel()
+    eval_model.train(train_df)
+    
+    all_actual = []
+    all_predicted = []
+    
+    for category in df['category'].unique():
+        cat_test = test_df[test_df['category'] == category].sort_values('date')
+        if len(cat_test) == 0:
+            continue
+        
+        preds = eval_model.predict(
+            categories=[category],
+            time_period='month',
+            start_date=cat_test['date'].min()
+        )
+        
+        if category in preds:
+            pred_df = preds[category]
+            n = min(len(cat_test), len(pred_df))
+            all_actual.extend(cat_test['sales'].values[:n])
+            all_predicted.extend(pred_df['predicted_sales'].values[:n])
+    
+    if all_actual:
+        actual = np.array(all_actual)
+        predicted = np.array(all_predicted)
+        mae = np.mean(np.abs(actual - predicted))
+        mae_pct = (mae / np.mean(actual)) * 100
+        rmse = np.sqrt(np.mean((actual - predicted) ** 2))
+        r2 = 1 - np.sum((actual - predicted) ** 2) / np.sum((actual - np.mean(actual)) ** 2)
+        
+        logger.info(f"  MAE:  {mae:.1f} ({mae_pct:.1f}%)")
+        logger.info(f"  RMSE: {rmse:.1f}")
+        logger.info(f"  R²:   {r2:.3f}")
+    
+    logger.info("\n" + "=" * 60)
+    logger.info("Model training and testing completed successfully!")
+    logger.info("=" * 60)
 
 
 if __name__ == "__main__":

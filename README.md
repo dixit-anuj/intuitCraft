@@ -4,18 +4,18 @@
 A production-ready sales forecasting system that predicts top-selling products by category across different time periods for QuickBooks Commerce users.
 
 ## Features
-- 📊 **Time-series Forecasting**: Predict sales for week, month, and year timeframes
-- 🎯 **Category-wise Analysis**: Top products by category
-- 🚀 **Optimized ML Model**: Ensemble of XGBoost + Prophet for accuracy
-- 🌐 **External Data Integration**: Incorporates economic indicators and trends
-- 💻 **Modern UI**: Interactive React dashboard with real-time visualizations
-- ⚡ **High Performance**: FastAPI backend with caching and optimization
+- **Time-series Forecasting**: Predict sales for week, month, and year timeframes
+- **Category-wise Analysis**: Top products by category with confidence intervals
+- **Optimized ML Model**: Ensemble of XGBoost + Holt-Winters for accuracy
+- **External Data Integration**: Architecture ready for economic indicators and market trends
+- **Modern UI**: Interactive React dashboard with Intuit-themed design and WCAG accessibility
+- **High Performance**: FastAPI backend with async endpoints
 
 ## Tech Stack
-- **Backend**: Python, FastAPI, Scikit-learn, XGBoost, Prophet
-- **Frontend**: React, TypeScript, Recharts, TailwindCSS
-- **Data**: Kaggle datasets, External APIs (FRED, Yahoo Finance)
-- **ML**: Ensemble modeling, Feature engineering, Time-series analysis
+- **Backend**: Python 3.9, FastAPI, Scikit-learn, XGBoost, statsmodels
+- **Frontend**: React 18, TypeScript, Recharts, Custom CSS (Intuit theme)
+- **ML**: Ensemble modeling (XGBoost 60% + Holt-Winters 40%), 17 engineered features
+- **Data**: Synthetic sales data with realistic seasonality, category-specific baselines
 
 ## Project Structure
 ```
@@ -23,19 +23,20 @@ IntuitCraft/
 ├── backend/              # FastAPI service
 │   ├── app/
 │   │   ├── api/         # API endpoints
-│   │   ├── models/      # ML models
+│   │   ├── models/      # ML models & schemas
 │   │   ├── services/    # Business logic
-│   │   └── utils/       # Utilities
-│   ├── data/            # Datasets
+│   │   └── core/        # Configuration
+│   ├── data/models/     # Trained model artifacts
 │   ├── notebooks/       # Jupyter notebooks
+│   ├── scripts/         # Training scripts
 │   └── requirements.txt
 ├── frontend/            # React application
 │   ├── src/
 │   │   ├── components/  # UI components
 │   │   ├── services/    # API clients
-│   │   └── pages/       # Application pages
+│   │   └── App.tsx      # Main app
 │   └── package.json
-├── presentation/        # Interview slides
+├── presentation/        # Interview materials
 └── docs/               # Documentation
 ```
 
@@ -44,9 +45,14 @@ IntuitCraft/
 ### Backend Setup
 ```bash
 cd backend
-python -m venv venv
+python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
+
+# Train the model
+python -m scripts.train_model
+
+# Start the server
 python -m app.main
 ```
 
@@ -62,36 +68,22 @@ npm start
 - Frontend UI: http://localhost:3000
 - API Docs: http://localhost:8000/docs
 
+## Model Performance
+
+Ensemble model (XGBoost + Holt-Winters) evaluated on 30-day holdout:
+
+| Metric | Value |
+|--------|-------|
+| R² Score | 0.82 |
+| MAE | 11% |
+| XGBoost Train R² | 0.98 |
+
 ## System Architecture
 
-### High-Level Design
-1. **Data Ingestion Layer**: Collects data from multiple sources
-2. **Processing Layer**: Cleans and features engineer data
-3. **ML Layer**: Ensemble model for predictions
-4. **API Layer**: RESTful endpoints for forecasts
-5. **Presentation Layer**: Interactive web dashboard
-
-### Key Design Decisions
-- **Ensemble Model**: Combines XGBoost (trend) + Prophet (seasonality)
-- **Caching Strategy**: Redis for frequently accessed predictions
-- **Scalability**: Horizontal scaling with load balancing
-- **Data Consistency**: Version control for model and data
-
-## Dataset Sources
-1. **Kaggle**: Retail sales dataset with transaction history
-2. **FRED API**: Economic indicators (GDP, inflation)
-3. **Yahoo Finance**: Market trends and sentiment
-
-## Model Performance
-- MAE: < 5% of average sales
-- RMSE: Optimized through hyperparameter tuning
-- R²: > 0.85 for all categories
-
-## Interview Talking Points
-- System design for high availability
-- ML model optimization strategies
-- Handling concept drift in sales data
-- Scalability and performance considerations
+1. **Data Layer**: Synthetic sales data with category-specific baselines, seasonality, and weekend patterns
+2. **ML Layer**: Ensemble model — XGBoost for feature-based predictions, Holt-Winters for time-series seasonality
+3. **API Layer**: FastAPI with RESTful endpoints and auto-generated Swagger docs
+4. **Presentation Layer**: React dashboard with Intuit brand colors, WCAG accessibility, keyboard navigation
 
 ## Author
 Built for Intuit Interview Demo

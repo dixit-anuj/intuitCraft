@@ -3,74 +3,78 @@
 
 ---
 
-## 🎯 What You Have
+## What You Have
 
 A **production-ready sales forecasting system** built for your Intuit interview that demonstrates:
 
-- ✅ Machine Learning (Ensemble XGBoost + Prophet)
-- ✅ Full-Stack Development (React + FastAPI)
-- ✅ System Design & Architecture
-- ✅ External Data Integration
-- ✅ Production-Grade Code
-- ✅ Comprehensive Documentation
+- Machine Learning (Ensemble XGBoost + Holt-Winters)
+- Full-Stack Development (React + FastAPI)
+- System Design & Architecture
+- Intuit-Themed Accessible UI
+- Production-Grade Code
+- Comprehensive Documentation
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 IntuitCraft/
-├── 📄 README.md                    # Project overview
-├── 📄 QUICK_START.md              # 5-minute setup guide
-├── 📄 PROJECT_OVERVIEW.md         # This file
-├── 🔧 setup.sh                    # Automated setup script
-├── 🚫 .gitignore                  # Git ignore rules
+├── README.md                    # Project overview
+├── QUICK_START.md              # 5-minute setup guide
+├── PROJECT_OVERVIEW.md         # This file
+├── setup.sh                    # Automated setup script
+├── .gitignore                  # Git ignore rules
 │
-├── 📂 backend/                    # Python FastAPI Service
-│   ├── 📂 app/
-│   │   ├── 📂 api/               # API endpoints
+├── backend/                    # Python FastAPI Service
+│   ├── app/
+│   │   ├── api/               # API endpoints
 │   │   │   ├── health.py         # Health check
 │   │   │   ├── forecasting.py   # Forecast endpoints
 │   │   │   └── data.py           # Data endpoints
-│   │   ├── 📂 services/          # Business logic
-│   │   │   ├── forecast_service.py
+│   │   ├── services/          # Business logic
+│   │   │   ├── forecast_service.py  # Uses trained model
 │   │   │   └── data_service.py
-│   │   ├── 📂 models/            # ML models & schemas
-│   │   │   ├── forecast_model.py # Ensemble model
-│   │   │   └── schemas.py        # Pydantic schemas
-│   │   ├── 📂 core/              # Configuration
+│   │   ├── models/            # ML models & schemas
+│   │   │   ├── forecast_model.py # Ensemble (XGBoost + Holt-Winters)
+│   │   │   └── schemas.py        # Pydantic v2 schemas
+│   │   ├── core/              # Configuration
 │   │   │   └── config.py
 │   │   └── main.py               # FastAPI app entry
-│   ├── 📂 notebooks/             # Jupyter notebooks
+│   ├── data/models/           # Trained model artifacts
+│   │   └── ensemble_model.pkl
+│   ├── notebooks/             # Jupyter notebooks
 │   │   └── 01_data_exploration.ipynb
-│   ├── 📂 scripts/               # Utility scripts
+│   ├── scripts/               # Utility scripts
 │   │   └── train_model.py
 │   ├── requirements.txt          # Python dependencies
 │   └── .env.example             # Environment template
 │
-├── 📂 frontend/                   # React TypeScript UI
-│   ├── 📂 src/
-│   │   ├── 📂 components/        # React components
+├── frontend/                   # React TypeScript UI
+│   ├── src/
+│   │   ├── components/        # React components
 │   │   │   ├── Header.tsx
 │   │   │   ├── Dashboard.tsx
 │   │   │   ├── CategoryCard.tsx
 │   │   │   ├── ForecastChart.tsx
 │   │   │   └── TopProducts.tsx
-│   │   ├── 📂 services/          # API client
+│   │   ├── services/          # API client
 │   │   │   └── api.ts
 │   │   ├── App.tsx              # Main app
 │   │   └── index.tsx            # Entry point
-│   ├── 📂 public/
+│   ├── public/
 │   │   └── index.html
 │   ├── package.json             # Node dependencies
 │   └── tsconfig.json            # TypeScript config
 │
-├── 📂 docs/                      # Documentation
+├── docs/                      # Documentation
 │   ├── SYSTEM_DESIGN.md         # Detailed system design
 │   ├── ARCHITECTURE_DIAGRAM.md  # Architecture diagrams
-│   └── ML_MODEL_DETAILS.md      # ML model documentation
+│   ├── ML_MODEL_DETAILS.md      # ML model documentation
+│   ├── MODEL_COMPARISON.md      # Model comparison analysis
+│   └── SARIMAX_ANALYSIS.md      # Classical model analysis
 │
-└── 📂 presentation/              # Interview materials
+└── presentation/              # Interview materials
     ├── INTERVIEW_PRESENTATION.md # Full presentation
     ├── DEMO_SCRIPT.md           # Step-by-step demo guide
     └── KEY_METRICS.md           # Performance metrics
@@ -78,7 +82,7 @@ IntuitCraft/
 
 ---
 
-## 🚀 Quick Start (5 Minutes)
+## Quick Start (5 Minutes)
 
 ### Option 1: Automated Setup
 
@@ -95,6 +99,7 @@ cd /Users/anujdixit/Desktop/IntuitCraft/backend
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
+python -m scripts.train_model   # Train the model first
 python -m app.main
 ```
 
@@ -111,14 +116,14 @@ npm start
 
 ---
 
-## 📚 Documentation Guide
+## Documentation Guide
 
 ### For Interview Preparation
 
 1. **Start Here**: `QUICK_START.md`
    - Get the demo running
+   - Train the model
    - Test all features
-   - Understand basic flow
 
 2. **System Design**: `docs/SYSTEM_DESIGN.md`
    - Architecture deep dive
@@ -142,95 +147,99 @@ npm start
    - Performance numbers
    - Business impact
    - Comparisons
-   - ROI calculations
 
 ### For Technical Deep Dives
 
 6. **ML Model**: `docs/ML_MODEL_DETAILS.md`
-   - Feature engineering
-   - Model architecture
+   - Feature engineering (17 features)
+   - Model architecture (XGBoost + Holt-Winters)
    - Training pipeline
-   - Performance optimization
+   - Evaluation results
 
-7. **Architecture**: `docs/ARCHITECTURE_DIAGRAM.md`
+7. **Model Comparison**: `docs/MODEL_COMPARISON.md`
+   - 5 approaches evaluated
+   - Why ensemble wins
+   - SARIMAX analysis
+
+8. **Architecture**: `docs/ARCHITECTURE_DIAGRAM.md`
    - System diagrams
    - Data flow
    - Deployment architecture
-   - Monitoring setup
 
 ---
 
-## 🎓 Key Features to Demonstrate
+## Key Features to Demonstrate
 
 ### 1. Dashboard Overview
-- 8 product categories
-- Real-time forecasts
+- 8 product categories with trained model predictions
 - Time period selection (week/month/year)
-- Growth indicators
+- Growth indicators and trend arrows
 
 ### 2. Category Deep Dive
 - Historical sales trend (60 days)
-- Future forecast (30 days)
-- Confidence intervals
+- Future forecast (30 days) from trained model
+- Confidence intervals (95%)
 - Statistical summary
 
 ### 3. Top Products
 - Ranked by predicted sales
 - Revenue projections
 - Growth percentages
-- Trend indicators (↗ ↘ →)
+- Trend indicators (up/down/stable arrows)
 
 ### 4. API Documentation
-- Interactive Swagger UI
-- Try out endpoints
+- Interactive Swagger UI at /docs
+- Try out endpoints live
 - Request/response schemas
-- Integration examples
+
+### 5. Accessibility & Design
+- Intuit/QuickBooks brand colors
+- WCAG AA keyboard navigation
+- Screen reader support (ARIA)
+- Focus indicators, skip links
 
 ---
 
-## 💡 Key Talking Points
+## Key Talking Points
 
 ### Technical Excellence
 
 1. **Ensemble ML Model**
-   - XGBoost + Prophet
-   - 87% R² accuracy
-   - 4.2% MAE (industry-leading)
-   - 25 engineered features
+   - XGBoost + Holt-Winters (Exponential Smoothing)
+   - 82% R² on 30-day holdout
+   - 17 engineered features
+   - Real trained model, not mock data
 
-2. **High Performance**
-   - < 500ms response time
-   - 70% cache hit rate
-   - Handles 10K concurrent users
-   - 8,500 requests/second
+2. **Production Code Quality**
+   - Pydantic v2 schemas with strict validation
+   - Structured logging with loguru
+   - Error handling throughout
+   - RESTful API with auto-generated docs
 
-3. **Production-Ready**
-   - RESTful API with documentation
-   - Error handling & logging
-   - Security best practices
-   - Monitoring & alerting
+3. **Accessible Frontend**
+   - WCAG AA compliant
+   - Intuit brand theme
+   - Keyboard navigation
+   - Screen reader support
 
 4. **Scalable Architecture**
    - Microservices design
-   - Horizontal scaling
-   - Multi-AZ deployment
+   - Horizontal scaling approach
+   - Cache-friendly API design
    - Cloud-native (AWS ready)
 
 ### Business Value
 
 1. **Cost Savings**
-   - 25-30% reduction in overstock
-   - $30K/month saved on holding costs
-   - 80% prevention of stockouts
+   - Reduced overstock through data-driven forecasting
+   - Better inventory turnover
 
 2. **Revenue Impact**
    - Better inventory of trending items
-   - $158K/month potential increase
-   - 17x ROI
+   - Prevent stockouts on high-demand products
 
 3. **Time Savings**
-   - 15 hours/week saved on manual forecasting
-   - Automated insights
+   - Automated insights replace manual forecasting
    - Data-driven decisions
 
 4. **Merchant Benefits**
@@ -240,65 +249,28 @@ npm start
 
 ---
 
-## 🎯 Interview Strategy
-
-### Opening (2 min)
-- State the problem clearly
-- Explain the business impact
-- Set up the demo
-
-### Demo (5 min) ⭐ MOST IMPORTANT
-- Show dashboard overview
-- Drill into one category
-- Explain predictions
-- Show API documentation
-
-### Technical (3 min)
-- ML model architecture
-- Feature engineering
-- Performance optimization
-- Why ensemble works
-
-### Scalability (2 min)
-- Horizontal scaling approach
-- Load testing results
-- High availability design
-
-### Conclusion (1 min)
-- Recap key achievements
-- Business impact
-- Future enhancements
-- Why Intuit
-
-### Q&A (Remaining)
-- Be honest about limitations
-- Show depth of knowledge
-- Connect to production systems
-
----
-
-## 📊 Key Metrics to Remember
+## Key Metrics
 
 | Metric | Value |
 |--------|-------|
-| **Model Accuracy (R²)** | 87% |
-| **MAE** | 4.2% |
-| **Response Time** | < 500ms |
-| **Concurrent Users** | 10,000 |
-| **Availability** | 99.9% |
-| **Cache Hit Rate** | 70% |
-| **Cost per User** | $0.85/month |
-| **ROI** | 17x |
+| **Model R² (holdout)** | 0.82 |
+| **XGBoost Train R²** | 0.98 |
+| **MAE (holdout)** | 11% |
+| **Engineered Features** | 17 |
+| **Training Records** | 2,928 |
+| **Model Version** | 2.0.0 |
+| **Categories** | 8 |
 
 ---
 
-## 🛠️ Tech Stack Summary
+## Tech Stack Summary
 
 ### Backend
 - **Language**: Python 3.9+
 - **Framework**: FastAPI (async, high performance)
-- **ML**: XGBoost, Prophet, Scikit-learn
+- **ML**: XGBoost, statsmodels (Holt-Winters), Scikit-learn
 - **Data**: Pandas, NumPy
+- **Validation**: Pydantic v2
 - **API**: RESTful, OpenAPI/Swagger
 
 ### Frontend
@@ -306,14 +278,10 @@ npm start
 - **Framework**: React 18
 - **Charts**: Recharts
 - **HTTP**: Axios
-- **Styling**: Custom CSS
+- **Styling**: Custom CSS with Intuit brand variables
+- **Accessibility**: WCAG AA, ARIA, keyboard navigation
 
-### Data Sources
-- **Primary**: Kaggle Retail Sales Dataset
-- **External**: FRED API (economic indicators)
-- **Market**: Yahoo Finance API
-
-### Infrastructure
+### Infrastructure (Production Design)
 - **Database**: PostgreSQL
 - **Cache**: Redis
 - **Deployment**: Docker, AWS
@@ -321,50 +289,56 @@ npm start
 
 ---
 
-## 🎬 Demo Checklist
+## Demo Checklist
 
 ### Before the Interview
 
-- [ ] Test backend starts successfully
-- [ ] Test frontend loads and displays data
-- [ ] Check all API endpoints work
-- [ ] Verify charts render correctly
+- [ ] Train the model: `python -m scripts.train_model`
+- [ ] Test backend starts successfully: `python -m app.main`
+- [ ] Test frontend loads and displays data: `npm start`
+- [ ] Check all API endpoints at http://localhost:8000/docs
+- [ ] Verify charts render with model data
 - [ ] Test time period switching
-- [ ] Test category selection
+- [ ] Test category selection and keyboard navigation
 - [ ] Practice the demo flow 3 times
-- [ ] Have backup slides ready
-- [ ] Test on the computer you'll use
 
 ### During Demo
 
 - [ ] Start with problem statement
-- [ ] Show architecture diagram
-- [ ] Demo main features systematically
-- [ ] Explain ML model approach
-- [ ] Discuss scalability
+- [ ] Show dashboard overview
+- [ ] Drill into a category, show chart
+- [ ] Explain ML model approach (XGBoost + Holt-Winters)
+- [ ] Discuss scalability design
 - [ ] Show API documentation
+- [ ] Mention accessibility features
 - [ ] Conclude with business impact
 - [ ] Be ready for Q&A
 
 ---
 
-## 🔧 Common Issues & Solutions
+## Common Issues & Solutions
 
 ### Backend Won't Start
 
 ```bash
-# Check Python version
 python3 --version  # Should be 3.9+
 
-# Reinstall dependencies
 cd backend
+source venv/bin/activate
 pip install --upgrade -r requirements.txt
+```
+
+### Model Not Found
+
+```bash
+cd backend
+source venv/bin/activate
+python -m scripts.train_model
 ```
 
 ### Frontend Won't Start
 
 ```bash
-# Clear and reinstall
 cd frontend
 rm -rf node_modules package-lock.json
 npm install
@@ -373,111 +347,15 @@ npm install
 ### Port Already in Use
 
 ```bash
-# Backend (change in app/main.py)
-# Frontend
+lsof -i :8000 -t | xargs kill
+# Or change frontend port:
 PORT=3001 npm start
 ```
 
-### Import Errors
-
-```bash
-# Make sure virtual environment is activated
-source venv/bin/activate
-
-# Install in editable mode
-pip install -e .
-```
-
 ---
 
-## 📈 What Makes This Project Stand Out
+## API Endpoints
 
-### 1. Completeness
-- Not just code, but a complete system
-- Documentation at every level
-- Production considerations
-- Business value quantified
-
-### 2. Technical Depth
-- Ensemble ML model (not just one algorithm)
-- External data integration
-- Performance optimization
-- Scalability design
-
-### 3. Real-World Ready
-- Error handling
-- Logging and monitoring
-- Security considerations
-- API documentation
-
-### 4. Business Focus
-- Solves real merchant problems
-- Quantified impact
-- Actionable insights
-- Clear ROI
-
-### 5. Presentation Quality
-- Professional UI
-- Clear visualizations
-- Intuitive user experience
-- Comprehensive documentation
-
----
-
-## 🎓 Learning Outcomes
-
-By building this project, you've demonstrated:
-
-### Technical Skills
-✅ Machine Learning (Ensemble models, Feature engineering)
-✅ Backend Development (FastAPI, REST APIs)
-✅ Frontend Development (React, TypeScript)
-✅ System Design (Scalability, High availability)
-✅ Data Engineering (ETL, External APIs)
-✅ DevOps (Docker, Monitoring)
-
-### Soft Skills
-✅ Problem-solving (Business need → Technical solution)
-✅ Communication (Documentation, Presentations)
-✅ Attention to detail (Code quality, UX)
-✅ Business acumen (ROI, Impact)
-
----
-
-## 🚀 Next Steps
-
-### Before Interview
-1. Run through demo 3-5 times
-2. Read all documentation
-3. Memorize key metrics
-4. Prepare for Q&A
-5. Test on interview computer
-
-### During Interview
-1. Be confident - you built something impressive
-2. Show enthusiasm for the problem
-3. Connect features to business value
-4. Be honest about trade-offs
-5. Ask clarifying questions
-
-### After Interview
-1. Send thank you email
-2. Include demo link if appropriate
-3. Offer to answer follow-up questions
-4. Keep improving the system
-
----
-
-## 📞 Support & Resources
-
-### Project Files
-- Main README: `/README.md`
-- Quick Start: `/QUICK_START.md`
-- System Design: `/docs/SYSTEM_DESIGN.md`
-- Presentation: `/presentation/INTERVIEW_PRESENTATION.md`
-- Demo Script: `/presentation/DEMO_SCRIPT.md`
-
-### API Endpoints
 ```
 GET  /api/v1/health
 GET  /api/v1/forecast/top-products
@@ -489,44 +367,26 @@ GET  /api/v1/data/categories
 
 ### Key Commands
 ```bash
+# Train model
+cd backend && source venv/bin/activate && python -m scripts.train_model
+
 # Start backend
 cd backend && source venv/bin/activate && python -m app.main
 
 # Start frontend
 cd frontend && npm start
-
-# Train model
-cd backend && python scripts/train_model.py
-
-# Run tests
-cd backend && pytest
 ```
 
 ---
 
-## 🎉 You're Ready!
-
-You have a complete, production-ready demo that showcases:
-- **Strong technical skills** across ML, backend, frontend, and system design
-- **Business understanding** with quantified impact
-- **Production mindset** with scalability and monitoring
-- **Communication skills** through comprehensive documentation
-
-**Go ace that interview!** 🚀
-
----
-
-## 📝 Final Checklist
+## Final Checklist
 
 - [ ] Can start backend successfully
+- [ ] Model is trained (ensemble_model.pkl exists)
 - [ ] Can start frontend successfully
 - [ ] Understand system architecture
-- [ ] Can explain ML model approach
-- [ ] Know key metrics by heart
+- [ ] Can explain ML model approach (XGBoost + Holt-Winters)
+- [ ] Know key metrics (R² 0.82, 17 features, model v2.0.0)
 - [ ] Practiced demo flow
 - [ ] Read all documentation
 - [ ] Prepared for Q&A
-- [ ] Have backup plan if demo fails
-- [ ] Confident and ready!
-
-**Good luck with your Intuit interview!**

@@ -29,13 +29,27 @@ class DataService:
     def _generate_synthetic_sales_data(self, days: int = 365) -> pd.DataFrame:
         """Generate synthetic sales data for demo"""
         
+        np.random.seed(42)  # Fixed seed for reproducible training data
+        
         categories = [
             "Electronics", "Clothing & Apparel", "Home & Garden",
             "Sports & Outdoors", "Books & Media", "Food & Beverages",
             "Health & Beauty", "Toys & Games"
         ]
         
-        end_date = datetime.now()
+        # Category-specific base sales to differentiate them
+        category_base = {
+            "Electronics": 1800,
+            "Clothing & Apparel": 1400,
+            "Home & Garden": 1100,
+            "Sports & Outdoors": 900,
+            "Books & Media": 600,
+            "Food & Beverages": 1200,
+            "Health & Beauty": 1000,
+            "Toys & Games": 750,
+        }
+        
+        end_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
         start_date = end_date - timedelta(days=days)
         
         data = []
@@ -43,8 +57,8 @@ class DataService:
         
         while current_date <= end_date:
             for category in categories:
-                # Generate daily sales for category
-                base_sales = np.random.uniform(500, 2000)
+                # Generate daily sales for category with category-specific base
+                base_sales = category_base.get(category, 1000) + np.random.uniform(-200, 200)
                 
                 # Add seasonality
                 day_of_year = current_date.timetuple().tm_yday

@@ -1,85 +1,115 @@
 .category-card {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
   cursor: pointer;
-  transition: all 0.3s ease;
-  border: 2px solid transparent;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: box-shadow 0.15s, border-color 0.15s;
+  border: 2px solid var(--color-border);
 }
 
 .category-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-  border-color: #667eea;
+  border-color: var(--color-primary-light);
+  box-shadow: 0 4px 12px rgba(35, 108, 255, 0.1);
 }
 
+.category-card:focus-visible {
+  box-shadow: var(--focus-ring);
+  border-color: var(--color-primary);
+  outline: none;
+}
+
+/* Selected state – Intuit Blue */
 .category-card.selected {
-  border-color: #667eea;
-  background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
-  box-shadow: 0 8px 24px rgba(102, 126, 234, 0.2);
+  border-color: var(--color-primary);
+  background: var(--color-primary-bg);
+  box-shadow: 0 4px 12px rgba(35, 108, 255, 0.12);
 }
 
+/* --- Header row --- */
 .card-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 15px;
+  margin-bottom: var(--space-md);
 }
 
 .card-header h3 {
   margin: 0;
-  font-size: 18px;
-  color: #1a202c;
-  font-weight: 600;
+  font-size: 17px;
+  color: var(--color-text);
+  font-weight: 700;
 }
 
+/* --- Trend badge – QB Green for up, QB Red for down --- */
 .trend-badge {
   padding: 4px 12px;
   border-radius: 20px;
-  font-size: 13px;
-  font-weight: 600;
-  display: flex;
+  font-size: 14px;
+  font-weight: 700;
+  display: inline-flex;
   align-items: center;
   gap: 4px;
 }
 
+.trend-badge.trend-up {
+  background: var(--color-qb-green-bg);
+  color: var(--color-qb-green-dark);
+}
+
+.trend-badge.trend-down {
+  background: var(--color-danger-bg);
+  color: var(--color-danger);
+}
+
+.trend-badge.trend-stable {
+  background: var(--color-background);
+  color: var(--color-neutral-trend);
+}
+
+.trend-arrow {
+  font-size: 16px;
+  line-height: 1;
+}
+
+/* --- Metrics --- */
 .card-metrics {
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  margin-bottom: 15px;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
 }
 
 .metric {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 2px;
 }
 
 .metric-label {
-  font-size: 12px;
-  color: #718096;
+  font-size: 14px;
+  color: var(--color-text-muted);
   font-weight: 500;
 }
 
 .metric-value {
   font-size: 20px;
-  color: #1a202c;
+  color: var(--color-text);
   font-weight: 700;
 }
 
+/* --- Footer – Intuit Blue link color --- */
 .card-footer {
-  padding-top: 15px;
-  border-top: 1px solid #e2e8f0;
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--color-border);
 }
 
 .top-product {
-  font-size: 13px;
-  color: #667eea;
-  font-weight: 500;
+  font-size: 14px;
+  color: var(--color-primary);
+  font-weight: 600;
 }
 
+/* --- Responsive --- */
 @media (max-width: 480px) {
   .card-header h3 {
     font-size: 16px;

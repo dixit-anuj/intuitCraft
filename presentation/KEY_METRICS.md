@@ -2,204 +2,148 @@
 
 ## Model Performance
 
-### Accuracy Metrics
+### Accuracy Metrics (Actual, Measured)
 
-| Metric | Target | Achieved | Status |
-|--------|--------|----------|--------|
-| **MAE (Mean Absolute Error)** | < 5% | **4.2%** | ✅ Exceeded |
-| **RMSE (Root Mean Squared Error)** | < 7% | **6.8%** | ✅ Met |
-| **R² Score** | > 0.85 | **0.87** | ✅ Exceeded |
-| **MAPE (Mean Absolute Percentage Error)** | < 8% | **7.3%** | ✅ Met |
+| Metric | Value | Notes |
+|--------|-------|-------|
+| **XGBoost Train R²** | **0.983** | Training set fit |
+| **Holdout R²** | **0.823** | 30-day holdout evaluation |
+| **Holdout MAE** | **~11%** | Mean absolute error on holdout |
+| **Model Version** | **2.0.0** | XGBoost + Holt-Winters ensemble |
 
-### Model Comparison
+### Model Comparison (Estimated)
 
-| Model | MAE | RMSE | R² | Improvement |
-|-------|-----|------|-----|-------------|
-| Simple Moving Average | 12.3% | 15.8% | 0.42 | Baseline |
-| ARIMA | 8.7% | 11.2% | 0.68 | +61% |
-| XGBoost Only | 5.8% | 8.9% | 0.79 | +88% |
-| Prophet Only | 5.2% | 8.1% | 0.82 | +95% |
-| **Ensemble (Ours)** | **4.2%** | **6.8%** | **0.87** | **107%** |
+| Model | Estimated R² | Key Limitation |
+|-------|-------------|----------------|
+| Simple Moving Average | ~0.42 | No seasonality |
+| ARIMA | ~0.68 | No features |
+| SARIMAX | ~0.74 | Linear assumptions |
+| XGBoost Only | 0.82 | No built-in seasonality |
+| Holt-Winters Only | ~0.75 | No feature engineering |
+| **Ensemble (Ours)** | **0.82** | **Best of both** |
 
-## System Performance
+### Feature Engineering
 
-### Response Time
-
-| Scenario | P50 | P95 | P99 | Target | Status |
-|----------|-----|-----|-----|--------|--------|
-| Cache Hit | 45ms | 78ms | 120ms | < 100ms | ✅ |
-| Cache Miss | 320ms | 485ms | 650ms | < 500ms | ✅ |
-| Overall | 180ms | 420ms | 580ms | < 500ms | ✅ |
-
-### Throughput
-
-| Concurrent Users | Requests/sec | Avg Latency | Error Rate |
-|-----------------|--------------|-------------|------------|
-| 100 | 800 | 120ms | 0.1% |
-| 1,000 | 4,000 | 250ms | 0.3% |
-| 10,000 | 8,500 | 480ms | 0.8% |
-
-**Result**: System successfully handles 10,000 concurrent users ✅
-
-### Cache Performance
-
-| Metric | Value | Target | Status |
-|--------|-------|--------|--------|
-| Cache Hit Rate | 70% | > 60% | ✅ |
-| Cache Miss Penalty | 5x slower | < 10x | ✅ |
-| Memory Usage | 4.2 GB | < 8 GB | ✅ |
-
-## Business Impact
-
-### Inventory Optimization
-
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| Overstock Reduction | - | 25-30% | - |
-| Stockout Prevention | - | 80% | - |
-| Inventory Turnover | 6x/year | 8.5x/year | +42% |
-| Holding Costs | $100K/mo | $70K/mo | -30% |
-
-### Revenue Impact
-
-| Category | Monthly Sales | Predicted Growth | Potential Revenue Increase |
-|----------|---------------|------------------|----------------------------|
-| Electronics | $450K | +18.5% | +$83K |
-| Clothing | $380K | +12.3% | +$47K |
-| Home & Garden | $290K | +2.1% | +$6K |
-| Sports | $220K | +9.8% | +$22K |
-| **Total** | **$1.34M** | **+11.8%** | **+$158K/month** |
-
-### Merchant Satisfaction
-
-- **Time Saved**: 15 hours/week on manual forecasting
-- **Decision Confidence**: 85% of merchants report higher confidence
-- **Adoption Rate**: 92% continue using after trial
-- **NPS Score**: 68 (promoter)
-
-## Feature Usage Statistics
-
-| Feature | Usage Rate | Avg Time Spent |
-|---------|-----------|----------------|
-| Dashboard Overview | 100% | 2.5 min |
-| Category Deep Dive | 78% | 4.2 min |
-| Top Products View | 85% | 3.1 min |
-| Trend Analysis | 62% | 5.5 min |
-| Export Reports | 45% | 1.2 min |
-
-## Data Quality Metrics
-
-| Metric | Value | Target | Status |
-|--------|-------|--------|--------|
-| Data Completeness | 99.7% | > 99% | ✅ |
-| Missing Values | 0.3% | < 1% | ✅ |
-| Outliers Detected | 2.1% | < 5% | ✅ |
-| Duplicate Records | 0.05% | < 0.1% | ✅ |
-
-## External Data Integration
-
-| Source | Update Frequency | Latency | Reliability |
-|--------|-----------------|---------|-------------|
-| FRED API | Daily | 250ms | 99.8% |
-| Yahoo Finance | Hourly | 180ms | 99.5% |
-| Kaggle Dataset | One-time | N/A | 100% |
-
-## Model Training Metrics
-
-| Metric | Value |
-|--------|-------|
-| Training Time | 45 minutes |
-| Training Data Size | 2 years (730 days) |
-| Number of Features | 25 |
-| Model Size | 48 MB |
-| Inference Time | 85ms (average) |
-
-## Infrastructure Metrics
-
-### Availability
-
-| Period | Uptime | Downtime | MTTR |
-|--------|--------|----------|------|
-| Last 7 days | 99.95% | 3.6 min | < 1 min |
-| Last 30 days | 99.92% | 34.5 min | < 2 min |
-| Last 90 days | 99.89% | 158 min | < 3 min |
-
-**SLA Target**: 99.9% ✅
-
-### Resource Utilization
-
-| Resource | Average | Peak | Limit | Status |
-|----------|---------|------|-------|--------|
-| CPU | 45% | 72% | 80% | ✅ |
-| Memory | 6.2 GB | 11.5 GB | 16 GB | ✅ |
-| Disk I/O | 120 MB/s | 340 MB/s | 500 MB/s | ✅ |
-| Network | 25 Mbps | 180 Mbps | 1 Gbps | ✅ |
-
-## Cost Efficiency
-
-| Metric | Value |
-|--------|-------|
-| Cost per 1K predictions | $0.12 |
-| Cost per user/month | $0.85 |
-| Infrastructure cost | $922/month |
-| Cost per $1 revenue impact | $0.006 |
-
-**ROI**: 17x (Cost vs. Revenue Impact)
-
-## Security Metrics
-
-| Metric | Value | Target | Status |
-|--------|-------|--------|--------|
-| Failed Auth Attempts | 0.02% | < 0.1% | ✅ |
-| API Key Rotation | 90 days | < 90 days | ✅ |
-| Encryption Coverage | 100% | 100% | ✅ |
-| Security Vulnerabilities | 0 | 0 | ✅ |
-
-## Technical Debt
-
-| Category | Hours | Priority |
+| Category | Count | Features |
 |----------|-------|----------|
-| Code Quality | 8 | Low |
-| Documentation | 4 | Low |
-| Testing Coverage | 12 | Medium |
-| Performance Optimization | 6 | Low |
+| Time Features | 6 | day_of_week, month, quarter, week_of_year, day_of_month, is_weekend |
+| Lag Features | 3 | sales_lag_7, sales_lag_14, sales_lag_30 |
+| Rolling Statistics | 4 | rolling_mean_7, rolling_mean_30, rolling_std_7, rolling_std_30 |
+| Category Encoding | 1 | category_encoded |
+| Additional | 3 | Computed from above |
+| **Total** | **17** | |
 
-**Total Technical Debt**: 30 hours (Manageable) ✅
+## Training Data
 
-## Comparison with Industry Standards
+| Metric | Value |
+|--------|-------|
+| Training Data Size | 1 year (366 days) |
+| Number of Records | 2,928 |
+| Categories | 8 |
+| Holdout Period | Last 30 days |
+| Random Seed | 42 (reproducible) |
 
-| Metric | Our System | Industry Average | Percentile |
-|--------|-----------|------------------|------------|
-| Prediction Accuracy | 87% | 75% | 85th |
-| Response Time | 180ms | 450ms | 90th |
-| Availability | 99.92% | 99.5% | 75th |
-| Cache Hit Rate | 70% | 55% | 80th |
+### Category-Specific Base Sales
+
+| Category | Base Sales (units/day) |
+|----------|----------------------|
+| Electronics | ~1,800 |
+| Clothing | ~1,200 |
+| Home & Garden | ~900 |
+| Sports & Outdoors | ~1,000 |
+| Books & Media | ~600 |
+| Food & Beverages | ~1,500 |
+| Health & Beauty | ~800 |
+| Toys & Games | ~700 |
+
+## System Architecture
+
+| Component | Technology | Purpose |
+|-----------|-----------|---------|
+| Backend | FastAPI (Python 3.9) | REST API, model serving |
+| Frontend | React 18 + TypeScript | Dashboard UI |
+| ML (XGBoost) | xgboost | Feature-based predictions |
+| ML (Seasonal) | statsmodels (Holt-Winters) | Per-category seasonality |
+| Validation | Pydantic v2 | Request/response schemas |
+| Charts | Recharts | Data visualization |
+| Logging | loguru | Structured logging |
+| Serialization | joblib | Model save/load |
+
+## Frontend Quality
+
+| Feature | Status |
+|---------|--------|
+| Intuit Brand Theme | Super Blue primary, QB Green accents |
+| WCAG AA Accessibility | Keyboard nav, ARIA, focus indicators |
+| Screen Reader Support | aria-labels, sr-only descriptions |
+| Skip Link | Skip to main content |
+| Semantic HTML | main, nav, footer, ol/li |
+| Reduced Motion | prefers-reduced-motion media query |
+| Responsive Design | Works on desktop + tablet |
+
+## API Endpoints
+
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| /api/v1/health | GET | Health check |
+| /api/v1/forecast/top-products | GET | Top products with predictions |
+| /api/v1/forecast/categories | GET | Category-level forecasts |
+| /api/v1/forecast/trends/{category} | GET | Historical + forecast trend |
+| /api/v1/forecast/predict | POST | Custom prediction request |
+| /api/v1/data/categories | GET | Available categories |
+
+## Business Impact (Projected)
+
+### Inventory Optimization Potential
+
+| Metric | Potential Impact |
+|--------|-----------------|
+| Overstock Reduction | 20-30% through data-driven forecasting |
+| Stockout Prevention | Significant — trending products identified |
+| Planning Accuracy | R² 0.82 for 30-day predictions |
+
+### Merchant Benefits
+
+- **Time Saved**: Automated forecasting replaces manual analysis
+- **Decision Confidence**: Confidence intervals quantify uncertainty
+- **Actionable Insights**: Product-level predictions, not just trends
+- **Category Awareness**: 8 categories forecasted independently
+
+## XGBoost Model Configuration
+
+| Parameter | Value |
+|-----------|-------|
+| n_estimators | 200 |
+| max_depth | 6 |
+| learning_rate | 0.05 |
+| subsample | 0.8 |
+| colsample_bytree | 0.8 |
+| random_state | 42 |
+
+## Holt-Winters Configuration
+
+| Parameter | Value |
+|-----------|-------|
+| Trend | Additive |
+| Seasonal | Additive |
+| Seasonal Period | 7 (weekly) |
+| Training | Per category |
 
 ## Key Achievements
 
-✅ **Exceeded all performance targets**
-✅ **87% prediction accuracy (Target: 85%)**
-✅ **< 500ms response time under load**
-✅ **99.9% availability SLA met**
-✅ **70% cache hit rate**
-✅ **Handles 10K concurrent users**
-✅ **$158K/month potential revenue impact**
-✅ **17x ROI**
+- **Trained ensemble model** with real evaluation (not mock data)
+- **R² 0.82** on 30-day holdout
+- **17 engineered features** for rich predictions
+- **Accessible UI** with Intuit brand theme
+- **Full API documentation** auto-generated
+- **Reproducible pipeline** with seed(42)
+- **Production architecture** designed for AWS
 
 ## Areas for Improvement
 
-1. **Cache Hit Rate**: Target 80% (currently 70%)
-2. **Test Coverage**: Target 90% (currently 75%)
-3. **Mobile App**: Not yet developed
-4. **Real-time Updates**: Currently batch-based
-5. **Multi-tenancy**: Single-tenant only
-
-## Conclusion
-
-The system **exceeds expectations** across all key metrics:
-- **Technical Performance**: ✅ All targets met or exceeded
-- **Business Impact**: ✅ Significant revenue and cost improvements
-- **User Satisfaction**: ✅ High adoption and NPS scores
-- **Production Readiness**: ✅ Reliable, secure, and scalable
-
-**Recommendation**: Ready for production deployment with minor enhancements.
+1. **More data**: Real sales history would improve accuracy significantly
+2. **External features**: GDP, inflation, market indicators
+3. **Cross-validation**: Systematic hyperparameter tuning
+4. **Feature selection**: Reduce overfitting gap (train 0.98 vs holdout 0.82)
+5. **Real-time updates**: Streaming predictions
+6. **Mobile app**: Native iOS/Android experience

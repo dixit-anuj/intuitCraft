@@ -2,24 +2,25 @@
 Pydantic schemas for API requests and responses
 """
 from pydantic import BaseModel, Field
-from typing import List, Optional, Dict
+from typing import Any, List, Optional, Dict
 from datetime import datetime
 
 
 class ForecastRequest(BaseModel):
     """Request schema for forecast predictions"""
-    time_period: str = Field(..., description="Time period: week, month, year")
-    categories: Optional[List[str]] = Field(None, description="Specific categories to forecast")
-    include_confidence: bool = Field(True, description="Include confidence intervals")
-    
-    class Config:
-        json_schema_extra = {
+    model_config = {
+        "json_schema_extra": {
             "example": {
                 "time_period": "month",
                 "categories": ["Electronics", "Clothing & Apparel"],
                 "include_confidence": True
             }
         }
+    }
+
+    time_period: str = Field(..., description="Time period: week, month, year")
+    categories: Optional[List[str]] = Field(None, description="Specific categories to forecast")
+    include_confidence: bool = Field(True, description="Include confidence intervals")
 
 
 class ProductForecast(BaseModel):
@@ -47,14 +48,9 @@ class CategoryForecast(BaseModel):
 
 class ForecastResponse(BaseModel):
     """Response schema for forecast predictions"""
-    time_period: str
-    forecast_date: datetime
-    predictions: List[CategoryForecast]
-    model_version: str = "1.0.0"
-    accuracy_score: float
-    
-    class Config:
-        json_schema_extra = {
+    model_config = {
+        "protected_namespaces": (),
+        "json_schema_extra": {
             "example": {
                 "time_period": "month",
                 "forecast_date": "2026-02-09T00:00:00Z",
@@ -63,6 +59,13 @@ class ForecastResponse(BaseModel):
                 "accuracy_score": 0.87
             }
         }
+    }
+
+    time_period: str
+    forecast_date: datetime
+    predictions: List[CategoryForecast]
+    model_version: str = "1.0.0"
+    accuracy_score: float
 
 
 class TopProductsResponse(BaseModel):
@@ -88,4 +91,4 @@ class CategoryTrendResponse(BaseModel):
     category: str
     historical_data: List[TrendDataPoint]
     forecast_data: List[TrendDataPoint]
-    statistics: Dict[str, float]
+    statistics: Dict[str, Any]

@@ -29,7 +29,7 @@
         │  ┌────────────────────┐  │  │  ┌────────────────────┐  │
         │  │ Forecast Service   │  │  │  │ Forecast Service   │  │
         │  │ Data Service       │  │  │  │ Data Service       │  │
-        │  │ ML Model Wrapper   │  │  │  │ ML Model Wrapper   │  │
+        │  │ ML Model (v2.0.0) │  │  │  │ ML Model (v2.0.0) │  │
         │  └────────────────────┘  │  │  └────────────────────┘  │
         └──────────────────────────┘  └──────────────────────────┘
                        │                             │
@@ -44,27 +44,27 @@
 │              │           │                  │          │                 │
 │ - Forecasts  │           │  ┌────────────┐  │          │  - Sales Data   │
 │ - Sessions   │           │  │  XGBoost   │  │          │  - Products     │
-│ - Rate Limit │           │  │  Prophet   │  │          │  - Categories   │
-│              │           │  │  Ensemble  │  │          │  - Metadata     │
-└──────────────┘           │  └────────────┘  │          └─────────────────┘
+│ - Rate Limit │           │  │ Holt-      │  │          │  - Categories   │
+│              │           │  │ Winters    │  │          │  - Metadata     │
+└──────────────┘           │  │  Ensemble  │  │          └─────────────────┘
+                           │  └────────────┘  │                   │
                            │         │         │                   │
-                           │         ▼         │                   │
-                           │  ┌────────────┐  │                   │
-                           │  │  Feature   │  │                   ▼
-                           │  │   Store    │  │          ┌─────────────────┐
-                           │  └────────────┘  │          │   PostgreSQL    │
-                           └──────────────────┘          │   Read Replica  │
-                                      │                  └─────────────────┘
+                           │         ▼         │                   ▼
+                           │  ┌────────────┐  │          ┌─────────────────┐
+                           │  │  Feature   │  │          │   PostgreSQL    │
+                           │  │   Store    │  │          │   Read Replica  │
+                           │  └────────────┘  │          └─────────────────┘
+                           └──────────────────┘
                                       │
                         ┌─────────────┴─────────────┐
                         │                           │
                         ▼                           ▼
             ┌──────────────────┐        ┌──────────────────────┐
             │   Data Lake      │        │   External APIs      │
-            │     (S3)         │        │                      │
-            │                  │        │  - FRED (Economic)   │
-            │ - Raw Data       │        │  - Yahoo Finance     │
-            │ - Models         │        │  - Kaggle Datasets   │
+            │     (S3)         │        │   (Future)           │
+            │                  │        │                      │
+            │ - Raw Data       │        │  - FRED (Economic)   │
+            │ - Models         │        │  - Yahoo Finance     │
             │ - Training Data  │        │  - Weather APIs      │
             │ - Backups        │        │                      │
             └──────────────────┘        └──────────────────────┘
@@ -74,65 +74,52 @@
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
-│                    Data Ingestion (Daily Job)                    │
+│                    Data Generation / Ingestion                    │
 └──────────────────────────────────────────────────────────────────┘
-                              │
-        ┌─────────────────────┼─────────────────────┐
-        │                     │                     │
-        ▼                     ▼                     ▼
-┌──────────────┐    ┌──────────────┐    ┌──────────────┐
-│   Kaggle     │    │     FRED     │    │    Yahoo     │
-│   Dataset    │    │   API Data   │    │   Finance    │
-│              │    │              │    │              │
-│ - Sales      │    │ - GDP        │    │ - S&P 500    │
-│ - Products   │    │ - Inflation  │    │ - Trends     │
-└──────────────┘    └──────────────┘    └──────────────┘
-        │                     │                     │
-        └─────────────────────┼─────────────────────┘
                               │
                               ▼
 ┌──────────────────────────────────────────────────────────────────┐
-│                      ETL Pipeline (Airflow)                      │
+│                    Synthetic Data Service                         │
 │                                                                  │
-│  1. Extract: Pull data from sources                             │
-│  2. Transform: Clean, normalize, aggregate                      │
-│  3. Load: Store in Data Lake and Database                       │
+│  - 8 categories with specific base sales                        │
+│  - Seasonal patterns (monthly, weekly)                          │
+│  - Weekend effects                                              │
+│  - Random noise for realism                                     │
+│  - np.random.seed(42) for reproducibility                       │
+│  - 1 year of daily data = 2,928 records                         │
 └──────────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌──────────────────────────────────────────────────────────────────┐
 │                     Feature Engineering                          │
 │                                                                  │
-│  - Time features (day, week, month, quarter, holiday)           │
-│  - Lag features (sales_lag_7, sales_lag_30)                     │
-│  - Rolling stats (mean, std, min, max)                          │
-│  - External features (GDP, inflation, indices)                  │
+│  - Time features (day_of_week, month, quarter, etc.)  [6]      │
+│  - Lag features (lag_7, lag_14, lag_30)                [3]      │
+│  - Rolling stats (mean_7, mean_30, std_7, std_30)     [4]      │
+│  - Category encoding                                   [1]      │
+│  - Additional computed features                        [3]      │
+│  - Total: 17 features                                           │
 └──────────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌──────────────────────────────────────────────────────────────────┐
-│                       Feature Store                              │
-│                 (Consistent feature serving)                     │
-└──────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌──────────────────────────────────────────────────────────────────┐
-│                      Model Training (Weekly)                     │
+│                      Model Training                              │
 │                                                                  │
 │  ┌────────────────┐                  ┌────────────────┐         │
-│  │    XGBoost     │                  │    Prophet     │         │
+│  │    XGBoost     │                  │  Holt-Winters  │         │
 │  │   Training     │                  │   Training     │         │
 │  │                │                  │                │         │
-│  │ - 2 years data │                  │ - Time series  │         │
-│  │ - Features     │                  │ - Seasonality  │         │
-│  │ - Validation   │                  │ - Trends       │         │
+│  │ - All cats     │                  │ - Per category │         │
+│  │ - 17 features  │                  │ - Weekly seas. │         │
+│  │ - 200 trees    │                  │ - period=7     │         │
 │  └────────────────┘                  └────────────────┘         │
 │          │                                    │                 │
 │          └────────────────┬───────────────────┘                 │
 │                           ▼                                     │
 │                  ┌─────────────────┐                            │
 │                  │ Ensemble Model  │                            │
-│                  │  (Weighted Avg) │                            │
+│                  │ 60% XGB + 40%  │                            │
+│                  │ Holt-Winters    │                            │
 │                  └─────────────────┘                            │
 └──────────────────────────────────────────────────────────────────┘
                               │
@@ -140,32 +127,21 @@
 ┌──────────────────────────────────────────────────────────────────┐
 │                      Model Evaluation                            │
 │                                                                  │
-│  - Metrics: MAE, RMSE, R², MAPE                                 │
-│  - Validation: Hold-out test set (last 30 days)                 │
-│  - Comparison: vs previous model version                        │
+│  - Holdout: last 30 days                                        │
+│  - Metrics: MAE, RMSE, R²                                      │
+│  - XGBoost Train R²: 0.983                                     │
+│  - Holdout R²: 0.823                                            │
 └──────────────────────────────────────────────────────────────────┘
                               │
-                     Pass threshold?
-                              │
-                     ┌────────┴────────┐
-                     │                 │
-                    Yes               No
-                     │                 │
-                     ▼                 ▼
-          ┌─────────────────┐   ┌──────────────┐
-          │ Model Registry  │   │    Alert     │
-          │  - Version      │   │   (Notify    │
-          │  - Metadata     │   │    Team)     │
-          │  - Save to S3   │   └──────────────┘
-          └─────────────────┘
-                     │
-                     ▼
-          ┌─────────────────┐
-          │ Model Deployment│
-          │  - Blue/Green   │
-          │  - Canary Test  │
-          │  - Full Rollout │
-          └─────────────────┘
+                              ▼
+┌──────────────────────────────────────────────────────────────────┐
+│               Model Artifact Storage                             │
+│                                                                  │
+│  - ensemble_model.pkl (joblib)                                  │
+│  - Contains: XGBoost model, Holt-Winters models,               │
+│    feature columns, scaler                                       │
+│  - Loaded by ForecastService at startup                         │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
 ## Data Flow - Prediction Request
@@ -187,76 +163,46 @@
 ┌──────────────────────────────────────────┐
 │        FastAPI Service                   │
 │                                          │
-│  1. Request Validation                   │
-│  2. Authentication Check                 │
-│  3. Rate Limiting                        │
+│  1. Request Validation (Pydantic v2)     │
+│  2. Route to Forecast Service            │
 └──────────────────────────────────────────┘
        │
        ▼
 ┌──────────────────────────────────────────┐
 │      Forecast Service                    │
 │                                          │
-│  - Parse request parameters              │
-│  - Generate cache key                    │
+│  1. Load ensemble model (if not cached)  │
+│  2. Generate synthetic historical data   │
+│  3. Call model.predict()                 │
+│     - XGBoost: 17-feature prediction    │
+│     - Holt-Winters: seasonal forecast   │
+│     - Ensemble: 60/40 weighted avg      │
+│  4. Post-process: confidence intervals   │
 └──────────────────────────────────────────┘
        │
        ▼
 ┌──────────────────────────────────────────┐
-│      Check Redis Cache                   │
+│  Return Response                         │
 │                                          │
-│  Key: forecast:Electronics:month:v1      │
+│  {                                       │
+│    products: [...],                      │
+│    model_version: "2.0.0",              │
+│    accuracy_score: 0.82                  │
+│  }                                       │
 └──────────────────────────────────────────┘
        │
-       └───────────────┬────────────────┐
-                       │                │
-                 Cache Hit         Cache Miss
-                       │                │
-                       │                ▼
-                       │     ┌─────────────────────┐
-                       │     │  ML Model Service   │
-                       │     │                     │
-                       │     │  1. Load features   │
-                       │     │  2. Run XGBoost     │
-                       │     │  3. Run Prophet     │
-                       │     │  4. Ensemble result │
-                       │     └─────────────────────┘
-                       │                │
-                       │                ▼
-                       │     ┌─────────────────────┐
-                       │     │  Post-processing    │
-                       │     │                     │
-                       │     │  - Sort by sales    │
-                       │     │  - Calculate trends │
-                       │     │  - Format response  │
-                       │     └─────────────────────┘
-                       │                │
-                       │                ▼
-                       │     ┌─────────────────────┐
-                       │     │   Update Cache      │
-                       │     │   TTL: 1 hour       │
-                       │     └─────────────────────┘
-                       │                │
-                       └────────────────┘
-                                │
-                                ▼
-                     ┌─────────────────────┐
-                     │  Return Response    │
-                     │                     │
-                     │  {                  │
-                     │    products: [...], │
-                     │    total: 10,       │
-                     │    generated_at: .. │
-                     │  }                  │
-                     └─────────────────────┘
-                                │
-                                ▼
-                     ┌─────────────────────┐
-                     │    Client Renders   │
-                     │    Dashboard        │
-                     └─────────────────────┘
+       ▼
+┌──────────────────────────────────────────┐
+│    React Dashboard                       │
+│                                          │
+│  - Intuit-themed UI                      │
+│  - Recharts for visualization            │
+│  - WCAG accessible                       │
+│  - Keyboard navigation                   │
+└──────────────────────────────────────────┘
 ```
 
-## Deployment Architecture (AWS)
+## Deployment Architecture (AWS - Production Design)
 
 ```
 ┌────────────────────────────────────────────────────────────────────┐
@@ -267,7 +213,7 @@
 ┌────────────────────────────────────────────────────────────────────┐
 │                      CloudFront (CDN)                              │
 │                   - Global edge locations                          │
-│                   - DDoS protection                                │
+│                   - Static React build served                      │
 └────────────────────────────────────────────────────────────────────┘
                                 │
                                 ▼
@@ -298,6 +244,7 @@
 │  │  │  ┌──────────┐  ┌──────────┐  ┌──────────┐           │   │ │
 │  │  │  │ FastAPI  │  │ FastAPI  │  │ FastAPI  │ ...       │   │ │
 │  │  │  │  EC2/ECS │  │  EC2/ECS │  │  EC2/ECS │           │   │ │
+│  │  │  │  + Model │  │  + Model │  │  + Model │           │   │ │
 │  │  │  └──────────┘  └──────────┘  └──────────┘           │   │ │
 │  │  └──────────────────────────────────────────────────────┘   │ │
 │  │                                                              │ │
@@ -309,14 +256,6 @@
 │  │  │  │   Cluster    │         │  Multi-AZ    │          │   │ │
 │  │  │  └──────────────┘         └──────────────┘          │   │ │
 │  │  └──────────────────────────────────────────────────────┘   │ │
-│  └──────────────────────────────────────────────────────────────┘ │
-│                                                                    │
-│  ┌──────────────────────────────────────────────────────────────┐ │
-│  │              ML/Training Subnet                              │ │
-│  │  ┌──────────────┐         ┌──────────────┐                  │ │
-│  │  │  SageMaker   │         │   EC2 GPU    │                  │ │
-│  │  │  Training    │         │   Instances  │                  │ │
-│  │  └──────────────┘         └──────────────┘                  │ │
 │  └──────────────────────────────────────────────────────────────┘ │
 └────────────────────────────────────────────────────────────────────┘
                                 │
@@ -336,7 +275,7 @@
 ```
 ┌────────────────────────────────────────────────────────────────┐
 │                     Application Logs                           │
-│           (FastAPI, Model Service, Workers)                    │
+│         (FastAPI + loguru, Model Service, Workers)             │
 └────────────────────────────────────────────────────────────────┘
                             │
                             ▼
@@ -356,7 +295,7 @@
 │                                                                │
 │  - Application: Request rate, latency, errors                  │
 │  - Infrastructure: CPU, memory, disk, network                  │
-│  - Business: Prediction accuracy, cache hit rate               │
+│  - Business: Prediction accuracy, model version                │
 └────────────────────────────────────────────────────────────────┘
                             │
                             ▼
@@ -365,7 +304,7 @@
 │                 (Grafana / CloudWatch)                         │
 │                                                                │
 │  - Real-time dashboards                                        │
-│  - Custom charts and graphs                                    │
+│  - Model performance tracking                                  │
 │  - Business KPIs                                               │
 └────────────────────────────────────────────────────────────────┘
                             │
@@ -375,7 +314,7 @@
 │                 (PagerDuty / SNS / Slack)                      │
 │                                                                │
 │  - Threshold-based alerts                                      │
-│  - Anomaly detection                                           │
+│  - Model drift detection                                       │
 │  - On-call rotation                                            │
 └────────────────────────────────────────────────────────────────┘
 ```

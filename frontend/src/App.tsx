@@ -9,7 +9,6 @@ function App() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Check API health on mount
     const checkHealth = async () => {
       try {
         const service = new ForecastService();
@@ -20,15 +19,14 @@ function App() {
         setLoading(false);
       }
     };
-
     checkHealth();
   }, []);
 
   if (loading) {
     return (
       <div className="App">
-        <div className="loading-container">
-          <div className="spinner"></div>
+        <div className="loading-container" role="status" aria-live="polite">
+          <div className="spinner" aria-hidden="true"></div>
           <p>Loading QuickBooks Commerce Forecasting...</p>
         </div>
       </div>
@@ -38,7 +36,7 @@ function App() {
   if (error) {
     return (
       <div className="App">
-        <div className="error-container">
+        <div className="error-container" role="alert">
           <h2>Connection Error</h2>
           <p>{error}</p>
           <p className="error-hint">
@@ -51,6 +49,9 @@ function App() {
 
   return (
     <div className="App">
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
       <Header />
       <Dashboard />
     </div>

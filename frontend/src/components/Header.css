@@ -1,10 +1,10 @@
 .header {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(10px);
-  border-radius: 16px;
-  padding: 20px 30px;
-  margin-bottom: 30px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg) var(--space-xl);
+  margin-bottom: var(--space-xl);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--color-border);
 }
 
 .header-content {
@@ -16,76 +16,75 @@
 .logo-section {
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: var(--space-md);
 }
 
+/* QuickBooks Green logo badge */
 .logo {
-  width: 50px;
-  height: 50px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 12px;
+  width: 48px;
+  height: 48px;
+  background: var(--color-qb-green);
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
-  font-weight: bold;
-  font-size: 20px;
-  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+  color: #fff;
+  font-weight: 700;
+  font-size: 18px;
+  letter-spacing: 0.5px;
 }
 
 .title-section h1 {
-  font-size: 24px;
-  margin: 0;
-  color: #1a202c;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--color-text);
+  line-height: 1.2;
 }
 
 .title-section p {
   font-size: 14px;
-  color: #718096;
-  margin: 2px 0 0 0;
+  color: var(--color-text-secondary);
+  margin-top: 2px;
 }
 
 .status-badge {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 16px;
-  background: #d4edda;
-  border: 1px solid #c3e6cb;
+  gap: var(--space-sm);
+  padding: 6px 14px;
+  background: var(--color-qb-green-bg);
+  border: 1px solid #b8e0b2;
   border-radius: 20px;
   font-size: 14px;
-  color: #155724;
-  font-weight: 500;
+  color: var(--color-qb-green-dark);
+  font-weight: 600;
 }
 
 .status-dot {
   width: 8px;
   height: 8px;
-  background: #28a745;
+  background: var(--color-qb-green);
   border-radius: 50%;
-  animation: pulse 2s infinite;
+  animation: pulse 2s ease-in-out infinite;
 }
 
 @keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.5;
-  }
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
 }
 
+/* --- Responsive --- */
 @media (max-width: 768px) {
   .header {
-    padding: 15px 20px;
+    padding: var(--space-md) var(--space-lg);
   }
 
   .title-section h1 {
-    font-size: 20px;
+    font-size: 18px;
   }
 
   .title-section p {
-    font-size: 12px;
+    font-size: 13px;
   }
 
   .logo {

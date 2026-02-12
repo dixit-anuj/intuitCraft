@@ -1,18 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import './ForecastChart.css';
 import {
-  LineChart,
   Line,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
   Area,
   ComposedChart,
 } from 'recharts';
 import { ForecastService, CategoryTrendResponse } from '../services/api';
+
+const forecastService = new ForecastService();
 
 interface ForecastChartProps {
   category: string;
@@ -23,13 +23,7 @@ const ForecastChart: React.FC<ForecastChartProps> = ({ category, timePeriod }) =
   const [trendData, setTrendData] = useState<CategoryTrendResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
-  const forecastService = new ForecastService();
-
-  useEffect(() => {
-    loadTrendData();
-  }, [category]);
-
-  const loadTrendData = async () => {
+  const loadTrendData = useCallback(async () => {
     setLoading(true);
     try {
       const data = await forecastService.getCategoryTrend(category, 60);
@@ -38,19 +32,27 @@ const ForecastChart: React.FC<ForecastChartProps> = ({ category, timePeriod }) =
       console.error('Error loading trend data:', error);
     }
     setLoading(false);
-  };
+  }, [category]);
+
+  useEffect(() => {
+    loadTrendData();
+  }, [loadTrendData]);
 
   if (loading) {
     return (
-      <div className="chart-loading">
-        <div className="spinner"></div>
+      <div className="chart-loading" role="status" aria-live="polite">
+        <div className="spinner" aria-hidden="true"></div>
         <p>Loading chart...</p>
       </div>
     );
   }
 
   if (!trendData) {
-    return <div className="chart-error">No data available</div>;
+    return (
+      <div className="chart-error" role="alert">
+        No data available
+      </div>
+    );
   }
 
   // Combine historical and forecast data
@@ -71,46 +73,53 @@ const ForecastChart: React.FC<ForecastChartProps> = ({ category, timePeriod }) =
     })),
   ];
 
+  // Build a screen reader summary
+  const srSummary = `${category} sales chart. Historical average: ${Math.round(trendData.statistics.mean)} units. Range: ${Math.round(trendData.statistics.min)} to ${Math.round(trendData.statistics.max)}. Trend: ${trendData.statistics.trend || 'stable'}.`;
+
   return (
-    <div className="forecast-chart">
+    <div className="forecast-chart" role="figure" aria-label={srSummary}>
       <div className="chart-header">
-        <h3>{category} - Sales Trend & Forecast</h3>
-        <div className="chart-legend">
+        <h3>{category} &mdash; Sales Trend & Forecast</h3>
+        <div className="chart-legend" aria-hidden="true">
           <span className="legend-item">
-            <span className="legend-dot actual"></span>
+            <span className="legend-swatch legend-actual"></span>
             Historical
           </span>
           <span className="legend-item">
-            <span className="legend-dot forecast"></span>
+            <span className="legend-swatch legend-forecast"></span>
             Forecast
           </span>
           <span className="legend-item">
-            <span className="legend-dot confidence"></span>
-            Confidence Range
+            <span className="legend-swatch legend-confidence"></span>
+            Confidence
           </span>
         </div>
       </div>
 
+      {/* Screen-reader accessible data summary */}
+      <p className="sr-only">{srSummary}</p>
+
       <ResponsiveContainer width="100%" height={350}>
         <ComposedChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
           <XAxis
             dataKey="date"
-            stroke="#718096"
-            style={{ fontSize: '12px' }}
+            stroke="var(--color-text-muted)"
+            style={{ fontSize: '13px' }}
             interval="preserveStartEnd"
           />
           <YAxis
-            stroke="#718096"
-            style={{ fontSize: '12px' }}
-            tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
+            stroke="var(--color-text-muted)"
+            style={{ fontSize: '13px' }}
+            tickFormatter={(value) => `${(value / 1000).toFixed(1)}k`}
           />
           <Tooltip
             contentStyle={{
-              background: 'white',
-              border: '1px solid #e2e8f0',
+              background: 'var(--color-surface)',
+              border: '1px solid var(--color-border)',
               borderRadius: '8px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+              fontSize: '14px',
             }}
             formatter={(value: any) => [`${Math.round(value)} units`, '']}
           />
@@ -118,31 +127,31 @@ const ForecastChart: React.FC<ForecastChartProps> = ({ category, timePeriod }) =
             type="monotone"
             dataKey="upper"
             stroke="none"
-            fill="#667eea"
-            fillOpacity={0.1}
+            fill="#5A93FF"
+            fillOpacity={0.12}
           />
           <Area
             type="monotone"
             dataKey="lower"
             stroke="none"
-            fill="#667eea"
-            fillOpacity={0.1}
+            fill="#5A93FF"
+            fillOpacity={0.12}
           />
           <Line
             type="monotone"
             dataKey="actual"
-            stroke="#667eea"
-            strokeWidth={2}
-            dot={{ r: 3 }}
+            stroke="#236CFF"
+            strokeWidth={2.5}
+            dot={{ r: 2.5, fill: '#236CFF' }}
             connectNulls={false}
           />
           <Line
             type="monotone"
             dataKey="predicted"
-            stroke="#f59e0b"
-            strokeWidth={2}
-            strokeDasharray="5 5"
-            dot={{ r: 3 }}
+            stroke="#B25E02"
+            strokeWidth={2.5}
+            strokeDasharray="6 4"
+            dot={{ r: 2.5, fill: '#B25E02' }}
             connectNulls={false}
           />
         </ComposedChart>
@@ -151,19 +160,19 @@ const ForecastChart: React.FC<ForecastChartProps> = ({ category, timePeriod }) =
       <div className="chart-stats">
         <div className="stat">
           <span className="stat-label">Average</span>
-          <span className="stat-value">{Math.round(trendData.statistics.mean)}</span>
+          <span className="stat-value">{Math.round(trendData.statistics.mean).toLocaleString()}</span>
         </div>
         <div className="stat">
           <span className="stat-label">Min</span>
-          <span className="stat-value">{Math.round(trendData.statistics.min)}</span>
+          <span className="stat-value">{Math.round(trendData.statistics.min).toLocaleString()}</span>
         </div>
         <div className="stat">
           <span className="stat-label">Max</span>
-          <span className="stat-value">{Math.round(trendData.statistics.max)}</span>
+          <span className="stat-value">{Math.round(trendData.statistics.max).toLocaleString()}</span>
         </div>
         <div className="stat">
           <span className="stat-label">Std Dev</span>
-          <span className="stat-value">{Math.round(trendData.statistics.std)}</span>
+          <span className="stat-value">{Math.round(trendData.statistics.std).toLocaleString()}</span>
         </div>
       </div>
     </div>

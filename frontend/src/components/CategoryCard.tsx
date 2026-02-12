@@ -31,27 +31,42 @@ const CategoryCard: React.FC<CategoryCardProps> = ({
     }).format(value);
   };
 
-  const getTrendIcon = (trend: string): string => {
-    if (trend === 'increasing') return '📈';
-    if (trend === 'decreasing') return '📉';
-    return '➡️';
+  const getTrendLabel = (trend: string): string => {
+    if (trend === 'increasing') return 'Up';
+    if (trend === 'decreasing') return 'Down';
+    return 'Stable';
   };
 
-  const getTrendColor = (trend: string): string => {
-    if (trend === 'increasing') return '#10b981';
-    if (trend === 'decreasing') return '#ef4444';
-    return '#6b7280';
+  const getTrendClass = (trend: string): string => {
+    if (trend === 'increasing') return 'trend-up';
+    if (trend === 'decreasing') return 'trend-down';
+    return 'trend-stable';
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onSelect();
+    }
   };
 
   return (
     <div
       className={`category-card ${isSelected ? 'selected' : ''}`}
       onClick={onSelect}
+      onKeyDown={handleKeyDown}
+      role="button"
+      tabIndex={0}
+      aria-pressed={isSelected}
+      aria-label={`${category.category}: ${formatNumber(category.total_predicted_sales)} predicted sales, ${getTrendLabel(category.trend)} ${Math.abs(category.growth_rate).toFixed(1)} percent`}
     >
       <div className="card-header">
         <h3>{category.category}</h3>
-        <span className="trend-badge" style={{ background: getTrendColor(category.trend) + '20', color: getTrendColor(category.trend) }}>
-          {getTrendIcon(category.trend)} {category.growth_rate > 0 ? '+' : ''}{category.growth_rate.toFixed(1)}%
+        <span className={`trend-badge ${getTrendClass(category.trend)}`}>
+          <span className="trend-arrow" aria-hidden="true">
+            {category.trend === 'increasing' ? '\u2197' : category.trend === 'decreasing' ? '\u2198' : '\u2192'}
+          </span>
+          {category.growth_rate > 0 ? '+' : ''}{category.growth_rate.toFixed(1)}%
         </span>
       </div>
 

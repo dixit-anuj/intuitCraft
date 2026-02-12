@@ -1,21 +1,121 @@
-* {
+/* === Reset & Base === */
+*,
+*::before,
+*::after {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
 }
 
+:root {
+  /* ── Intuit / QuickBooks Brand Palette ── */
+
+  /* Primary – Intuit Super Blue */
+  --color-primary: #236CFF;
+  --color-primary-dark: #1A52CC;
+  --color-primary-light: #5A93FF;
+  --color-primary-bg: #E8F0FF;
+
+  /* Accent – QuickBooks Green (logo & positive indicators) */
+  --color-qb-green: #2CA01C;
+  --color-qb-green-dark: #1F7A12;
+  --color-qb-green-bg: #E6F5E3;
+
+  /* Neutrals – QuickBooks product tones */
+  --color-text: #0D333F;            /* QB dark teal – 14:1 on white */
+  --color-text-secondary: #393A3D;  /* QB charcoal – 11:1 */
+  --color-text-muted: #6B6C72;      /* QB gray – 5.1:1 */
+  --color-border: #D4D7DC;
+  --color-surface: #FFFFFF;
+  --color-background: #F4F5F8;      /* QB light gray */
+
+  /* Semantic – Status */
+  --color-success: #2CA01C;         /* QB Green */
+  --color-success-bg: #E6F5E3;
+  --color-danger: #D13B18;          /* QB warm red – 5.2:1 */
+  --color-danger-bg: #FDEAE6;
+  --color-warning: #B25E02;         /* Amber – 4.7:1 */
+  --color-neutral-trend: #6B6C72;
+
+  /* Spacing */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+
+  /* Radii */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+
+  /* Focus ring – Intuit Blue */
+  --focus-ring: 0 0 0 3px rgba(35, 108, 255, 0.4);
+}
+
 body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--color-background);
+  color: var(--color-text);
   min-height: 100vh;
+  font-size: 16px;
+  line-height: 1.5;
 }
 
 code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
-    monospace;
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+}
+
+/* === Global focus styles === */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+  border-radius: var(--radius-sm);
+}
+
+/* === Skip-to-content link === */
+.skip-link {
+  position: absolute;
+  top: -100px;
+  left: var(--space-md);
+  background: var(--color-primary);
+  color: #fff;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 14px;
+  z-index: 1000;
+  text-decoration: none;
+  transition: top 0.2s;
+}
+
+.skip-link:focus {
+  top: var(--space-md);
+}
+
+/* === Reduced motion === */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* === Utility: screen-reader only === */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }

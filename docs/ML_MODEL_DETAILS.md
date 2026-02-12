@@ -4,14 +4,22 @@
 
 The QuickBooks Commerce Sales Forecasting system uses an **Ensemble Model** that combines two complementary approaches:
 
-1. **XGBoost** (Gradient Boosting) - Captures complex feature interactions
-2. **Prophet** (Time Series) - Models seasonality and trends
+1. **XGBoost** (Gradient Boosting) - Captures complex feature interactions and non-linear patterns
+2. **Holt-Winters** (Exponential Smoothing) - Models seasonality and time-series trends per category
 
 ### Why Ensemble?
 
-- **XGBoost** excels at learning non-linear relationships between features
-- **Prophet** is specifically designed for business time series with seasonality
+- **XGBoost** excels at learning non-linear relationships between engineered features
+- **Holt-Winters** is specifically designed for time series with seasonal patterns
 - Combining both provides robust predictions that leverage the strengths of each
+
+### Why Holt-Winters Over Prophet?
+
+We replaced Prophet with Holt-Winters (from statsmodels) for several practical reasons:
+- **Stability**: No complex C/Stan backend dependencies
+- **Lightweight**: Ships with statsmodels, no extra installation issues
+- **Proven**: Classical exponential smoothing is well-understood and reliable
+- **Fast**: Trains quickly per category with minimal configuration
 
 ## Model Architecture
 
@@ -22,8 +30,8 @@ Input Features
       │                 │                  │
       ▼                 ▼                  ▼
 ┌──────────┐    ┌──────────────┐   ┌─────────────┐
-│  Time    │    │   Lag        │   │  External   │
-│ Features │    │  Features    │   │  Indicators │
+│  Time    │    │   Lag        │   │  Rolling    │
+│ Features │    │  Features    │   │  Statistics │
 └──────────┘    └──────────────┘   └─────────────┘
       │                 │                  │
       └─────────────────┴──────────────────┘
@@ -31,10 +39,10 @@ Input Features
            ┌────────────┴────────────┐
            │                         │
            ▼                         ▼
-     ┌──────────┐             ┌──────────┐
-     │ XGBoost  │             │ Prophet  │
-     │  Model   │             │  Model   │
-     └──────────┘             └──────────┘
+     ┌──────────┐          ┌────────────────┐
+     │ XGBoost  │          │  Holt-Winters  │
+     │  Model   │          │ (per category) │
+     └──────────┘          └────────────────┘
            │                         │
            │  Weight: 0.6            │  Weight: 0.4
            │                         │
@@ -49,7 +57,7 @@ Input Features
                         ▼
               ┌──────────────────┐
               │ Post-processing  │
-              │ - Bounds check   │
+              │ - Non-negative   │
               │ - Confidence     │
               └──────────────────┘
                         │
@@ -57,23 +65,21 @@ Input Features
                  Final Forecast
 ```
 
-## Feature Engineering
+## Feature Engineering (17 Features)
 
 ### 1. Time-Based Features
 
 ```python
-# Temporal features
+# Temporal features extracted from date
 - day_of_week: [0-6] (Monday=0)
 - month: [1-12]
 - quarter: [1-4]
 - week_of_year: [1-52]
 - day_of_month: [1-31]
 - is_weekend: [0, 1]
-- is_holiday: [0, 1]  # US holidays
-- days_to_next_holiday: [0-365]
 ```
 
-**Importance**: Captures cyclical patterns in shopping behavior
+**Importance**: Captures cyclical patterns — weekends show higher sales in certain categories.
 
 ### 2. Lag Features
 
@@ -82,10 +88,9 @@ Input Features
 - sales_lag_7: Sales from 7 days ago
 - sales_lag_14: Sales from 14 days ago
 - sales_lag_30: Sales from 30 days ago
-- sales_lag_90: Sales from 90 days ago
 ```
 
-**Importance**: Recent sales are strong predictors of future sales
+**Importance**: Recent sales are strong predictors of future sales.
 
 ### 3. Rolling Statistics
 
@@ -95,52 +100,32 @@ Input Features
 - rolling_mean_30: 30-day moving average
 - rolling_std_7: 7-day standard deviation
 - rolling_std_30: 30-day standard deviation
-- rolling_min_30: 30-day minimum
-- rolling_max_30: 30-day maximum
 ```
 
-**Importance**: Captures trends and volatility
+**Importance**: Captures trends and volatility in sales patterns.
 
-### 4. External Economic Indicators
+### 4. Category Encoding
 
 ```python
-# Macroeconomic features (from FRED API)
-- gdp_growth_rate: Quarterly GDP growth
-- inflation_rate: CPI inflation rate
-- unemployment_rate: National unemployment %
-- consumer_confidence_index: Consumer sentiment
-- retail_sales_growth: Overall retail sector growth
-
-# Market indicators (from Yahoo Finance)
-- sp500_return: S&P 500 7-day return
-- volatility_index: VIX index
+# Category as numeric feature
+- category_encoded: Label-encoded category (0-7)
 ```
 
-**Importance**: Economic conditions affect consumer spending
-
-### 5. Category-Specific Features
-
-```python
-# Category encoding
-- category_encoded: One-hot encoded category
-- category_historical_avg: Average sales for category
-- category_seasonality_factor: Seasonal multiplier
-```
+**Importance**: Allows the model to learn category-specific patterns.
 
 ### Feature Importance (XGBoost)
 
-| Feature | Importance |
+| Feature | Typical Importance |
 |---------|-----------|
-| rolling_mean_30 | 0.18 |
-| sales_lag_7 | 0.15 |
-| sales_lag_30 | 0.12 |
-| month | 0.11 |
-| rolling_mean_7 | 0.09 |
-| day_of_week | 0.08 |
-| gdp_growth_rate | 0.07 |
-| is_weekend | 0.06 |
-| consumer_confidence | 0.05 |
-| category_encoded | 0.09 |
+| rolling_mean_30 | High |
+| sales_lag_7 | High |
+| sales_lag_30 | Medium-High |
+| month | Medium |
+| rolling_mean_7 | Medium |
+| day_of_week | Medium |
+| is_weekend | Medium |
+| rolling_std_7 | Low-Medium |
+| category_encoded | Low-Medium |
 
 ## Model 1: XGBoost
 
@@ -148,99 +133,61 @@ Input Features
 
 ```python
 XGBRegressor(
-    n_estimators=100,        # Number of trees
-    max_depth=6,             # Tree depth
-    learning_rate=0.1,       # Step size shrinkage
-    subsample=0.8,           # Row sampling
-    colsample_bytree=0.8,    # Column sampling
-    min_child_weight=1,      # Minimum sum of instance weight
-    gamma=0,                 # Min loss reduction for split
-    reg_alpha=0,             # L1 regularization
-    reg_lambda=1,            # L2 regularization
+    n_estimators=200,
+    max_depth=6,
+    learning_rate=0.05,
+    subsample=0.8,
+    colsample_bytree=0.8,
     random_state=42
 )
 ```
 
 ### Training Process
 
-1. **Data Split**: 80% train, 20% validation
-2. **Cross-Validation**: 5-fold time-series CV
-3. **Hyperparameter Tuning**: Grid search over key parameters
-4. **Early Stopping**: Monitor validation MAE
+1. **Data Generation**: 1 year of synthetic daily data across 8 categories (2,928 records)
+2. **Feature Engineering**: 17 features computed per record
+3. **Train/Holdout Split**: Last 30 days held out for evaluation
+4. **Training**: XGBoost trained on all categories at once
 
 ### Performance Metrics
 
 ```
 Training Set:
-- MAE: 3.8%
-- RMSE: 5.9%
-- R²: 0.91
+- R²: 0.983
 
-Validation Set:
-- MAE: 4.5%
-- RMSE: 7.2%
-- R²: 0.86
+Holdout Set (last 30 days):
+- R²: 0.823
+- MAE: ~11%
 ```
 
-## Model 2: Prophet
+## Model 2: Holt-Winters (Exponential Smoothing)
 
 ### Configuration
 
 ```python
-Prophet(
-    growth='linear',              # Linear growth
-    yearly_seasonality=True,      # Annual patterns
-    weekly_seasonality=True,      # Weekly patterns
-    daily_seasonality=False,      # No daily patterns
-    seasonality_mode='multiplicative',  # Multiplicative seasonality
-    changepoint_prior_scale=0.05, # Flexibility of trend
-    seasonality_prior_scale=10,   # Strength of seasonality
-    holidays_prior_scale=10       # Holiday impact
+ExponentialSmoothing(
+    endog=category_time_series,
+    trend='add',              # Additive trend component
+    seasonal='add',           # Additive seasonal component
+    seasonal_periods=7        # Weekly seasonality
 )
 ```
 
-### Custom Seasonalities
+### Per-Category Training
+
+Holt-Winters models are trained **independently per category**:
+- One model for Electronics, one for Clothing, etc.
+- Each captures the specific seasonal pattern and trend for that category
+- Weekly seasonality (period=7) captures day-of-week patterns
+
+### Handling Edge Cases
 
 ```python
-# Add custom seasonalities
-model.add_seasonality(
-    name='monthly',
-    period=30.5,
-    fourier_order=5
-)
+# Fill gaps in time series
+ts = ts.ffill().bfill()
 
-model.add_seasonality(
-    name='quarterly',
-    period=91.25,
-    fourier_order=3
-)
-```
-
-### Holiday Effects
-
-```python
-# US Holidays with impact
-holidays = pd.DataFrame({
-    'holiday': 'holiday_name',
-    'ds': pd.to_datetime(holiday_dates),
-    'lower_window': -1,  # Day before
-    'upper_window': 1,   # Day after
-})
-
-# Major shopping events
-- Black Friday: +150% boost
-- Cyber Monday: +120% boost
-- Christmas: +80% boost
-- Prime Day: +60% boost
-```
-
-### Performance Metrics
-
-```
-Validation Set:
-- MAE: 5.2%
-- RMSE: 8.1%
-- R²: 0.82
+# Fallback for categories with insufficient data
+# Uses XGBoost prediction alone
 ```
 
 ## Ensemble Strategy
@@ -248,156 +195,158 @@ Validation Set:
 ### Weighted Average
 
 ```python
-def ensemble_predict(xgb_pred, prophet_pred):
+def ensemble_predict(xgb_pred, hw_pred):
     """
-    Combine predictions with learned weights
+    Combine predictions with fixed weights
     """
     xgb_weight = 0.6
-    prophet_weight = 0.4
+    hw_weight = 0.4
     
     final_pred = (xgb_weight * xgb_pred + 
-                  prophet_weight * prophet_pred)
+                  hw_weight * hw_pred)
     
-    return final_pred
+    return max(final_pred, 0)  # Non-negative sales
 ```
 
 ### Confidence Intervals
 
 ```python
-def calculate_confidence(prophet_forecast):
+def calculate_confidence(prediction):
     """
-    Use Prophet's uncertainty intervals
+    95% confidence interval based on prediction magnitude
     """
-    lower_bound = prophet_forecast['yhat_lower']
-    upper_bound = prophet_forecast['yhat_upper']
+    margin = prediction * 0.15  # 15% margin
+    lower_bound = max(prediction - margin, 0)
+    upper_bound = prediction + margin
     
-    # Adjust based on XGBoost variance
-    adjusted_lower = lower_bound * 0.95
-    adjusted_upper = upper_bound * 1.05
-    
-    return adjusted_lower, adjusted_upper
+    return lower_bound, upper_bound
 ```
 
 ### Ensemble Performance
 
 ```
-Test Set (Last 30 days):
-- MAE: 4.2% ✓ (Target: < 5%)
-- RMSE: 6.8% ✓ (Target: < 7%)
-- R²: 0.87 ✓ (Target: > 0.85)
-- MAPE: 7.3%
+Holdout Set (Last 30 days):
+- R²: 0.82
+- MAE: ~11%
+- Model Version: 2.0.0
 ```
 
 ## Model Training Pipeline
 
-### 1. Data Collection
+### 1. Data Generation
 
 ```python
-# Daily batch job (2 AM UTC)
-def collect_training_data():
+def generate_synthetic_data():
     """
-    Collect data from multiple sources
+    Generate realistic synthetic sales data
     """
-    # Internal sales data
-    sales_df = load_from_database(
-        start_date=today - timedelta(days=730),
-        end_date=today
-    )
+    np.random.seed(42)  # Reproducible
     
-    # External indicators
-    fred_data = fetch_fred_indicators()
-    market_data = fetch_yahoo_finance()
+    categories = [
+        "Electronics", "Clothing", "Home & Garden",
+        "Sports & Outdoors", "Books & Media",
+        "Food & Beverages", "Health & Beauty",
+        "Toys & Games"
+    ]
     
-    # Merge datasets
-    training_df = merge_data_sources(
-        sales_df, fred_data, market_data
-    )
+    # Category-specific base sales
+    category_base = {
+        "Electronics": 1800,
+        "Clothing": 1200,
+        "Home & Garden": 900,
+        ...
+    }
     
-    return training_df
+    # Add seasonality, weekend effects, noise
+    ...
 ```
 
 ### 2. Feature Engineering
 
 ```python
-def engineer_features(df):
+def prepare_features(df):
     """
-    Create all engineered features
+    Create all 17 engineered features
     """
-    df = add_time_features(df)
-    df = add_lag_features(df)
-    df = add_rolling_features(df)
-    df = add_external_features(df)
-    df = add_category_features(df)
+    df = add_time_features(df)      # 6 features
+    df = add_lag_features(df)       # 3 features
+    df = add_rolling_features(df)   # 4 features
+    df = add_category_encoding(df)  # 1 feature
+    # + 3 additional computed features
     
-    return df
+    return df  # 17 total features
 ```
 
 ### 3. Training
 
 ```python
-def train_models(train_df):
+def train(self, df):
     """
     Train both models
     """
-    # Prepare data
-    X_train, y_train = prepare_features(train_df)
+    # Prepare features
+    feature_df = self.prepare_features(df)
     
-    # Train XGBoost
-    xgb_model = train_xgboost(X_train, y_train)
+    # Train XGBoost on all data
+    self.xgb_model = XGBRegressor(...)
+    self.xgb_model.fit(X_train, y_train)
     
-    # Train Prophet (per category)
-    prophet_models = {}
-    for category in train_df['category'].unique():
-        cat_data = train_df[train_df['category'] == category]
-        prophet_models[category] = train_prophet(cat_data)
-    
-    return xgb_model, prophet_models
+    # Train Holt-Winters per category
+    self.hw_models = {}
+    for category in df['category'].unique():
+        cat_data = df[df['category'] == category]
+        ts = cat_data.set_index('date')['sales']
+        ts = ts.resample('D').mean().ffill().bfill()
+        
+        model = ExponentialSmoothing(
+            ts, trend='add', seasonal='add',
+            seasonal_periods=7
+        ).fit()
+        self.hw_models[category] = model
 ```
 
 ### 4. Evaluation
 
 ```python
-def evaluate_model(model, val_df):
+def evaluate_model():
     """
-    Compute evaluation metrics
+    Holdout evaluation on last 30 days
     """
-    y_true = val_df['sales']
-    y_pred = model.predict(val_df)
+    # Split: everything before last 30 days = train
+    # Last 30 days = holdout
+    
+    model.train(train_data)
+    predictions = model.predict(holdout_data)
     
     mae = mean_absolute_error(y_true, y_pred)
-    rmse = np.sqrt(mean_squared_error(y_true, y_pred))
+    rmse = sqrt(mean_squared_error(y_true, y_pred))
     r2 = r2_score(y_true, y_pred)
-    mape = np.mean(np.abs((y_true - y_pred) / y_true)) * 100
     
-    return {
-        'mae': mae,
-        'rmse': rmse,
-        'r2': r2,
-        'mape': mape
-    }
+    # Results:
+    # R²: 0.823
+    # MAE: ~11%
 ```
 
-### 5. Deployment
+### 5. Saving & Loading
 
 ```python
-def deploy_model(model, metrics):
-    """
-    Deploy if metrics meet threshold
-    """
-    if metrics['mae'] < 0.05 and metrics['r2'] > 0.85:
-        # Save model to S3
-        save_to_s3(model, f"models/v{version}")
-        
-        # Blue-green deployment
-        deploy_to_production(model)
-        
-        # Update model registry
-        register_model_version(version, metrics)
-        
-        return True
-    else:
-        send_alert("Model quality below threshold")
-        return False
+def save(self, path):
+    """Save entire ensemble to single file"""
+    joblib.dump({
+        'xgb_model': self.xgb_model,
+        'hw_models': self.hw_models,
+        'feature_columns': self.feature_columns,
+        'scaler': self.scaler
+    }, path)
+
+def load(cls, path):
+    """Load ensemble from file"""
+    data = joblib.load(path)
+    model = cls()
+    model.xgb_model = data['xgb_model']
+    model.hw_models = data['hw_models']
+    ...
+    return model
 ```
 
 ## Prediction Serving
@@ -405,103 +354,51 @@ def deploy_model(model, metrics):
 ### Online Inference
 
 ```python
-def predict_sales(category, time_period):
+def predict(self, df):
     """
-    Generate prediction for category
+    Generate prediction using ensemble
     """
-    # Load models
-    xgb_model = load_model('xgboost')
-    prophet_model = load_model(f'prophet_{category}')
-    
     # Prepare features
-    features = prepare_online_features(category)
+    features = self.prepare_features(df)
     
     # XGBoost prediction
-    xgb_pred = xgb_model.predict(features)
+    xgb_pred = self.xgb_model.predict(features)
     
-    # Prophet prediction
-    future_dates = create_future_dates(time_period)
-    prophet_pred = prophet_model.predict(future_dates)
+    # Holt-Winters prediction (per category)
+    hw_pred = get_hw_forecast(category, steps)
     
-    # Ensemble
-    final_pred = ensemble_predict(xgb_pred, prophet_pred)
+    # Ensemble: 60% XGBoost + 40% Holt-Winters
+    final_pred = 0.6 * xgb_pred + 0.4 * hw_pred
     
-    # Confidence intervals
-    lower, upper = calculate_confidence(prophet_pred)
-    
-    return {
-        'predicted_sales': final_pred,
-        'confidence_lower': lower,
-        'confidence_upper': upper
-    }
+    return max(final_pred, 0)
 ```
 
-### Batch Inference
-
-```python
-def batch_predict_all_categories():
-    """
-    Generate predictions for all categories
-    (Run daily for caching)
-    """
-    categories = get_all_categories()
-    time_periods = ['week', 'month', 'year']
-    
-    predictions = {}
-    for category in categories:
-        for period in time_periods:
-            pred = predict_sales(category, period)
-            cache_key = f"forecast:{category}:{period}"
-            cache_prediction(cache_key, pred, ttl=3600)
-            predictions[(category, period)] = pred
-    
-    return predictions
-```
-
-## Model Monitoring
+## Model Monitoring (Production Design)
 
 ### Performance Tracking
 
-```python
-def monitor_predictions():
-    """
-    Compare predictions with actuals
-    """
-    # Get predictions from last week
-    predictions = get_predictions(date_range=7)
-    
-    # Get actual sales
-    actuals = get_actual_sales(date_range=7)
-    
-    # Calculate drift
-    mae_drift = calculate_mae(predictions, actuals)
-    
-    # Alert if drift > threshold
-    if mae_drift > 0.10:  # 10% threshold
-        alert_team("Model drift detected", {
-            'current_mae': mae_drift,
-            'threshold': 0.10
-        })
-```
+- Compare predictions with actuals weekly
+- Track MAE drift over time
+- Alert if MAE increases > 20%
 
 ### Retraining Triggers
 
-1. **Scheduled**: Weekly retraining
-2. **Performance Degradation**: MAE increases by > 20%
-3. **Data Drift**: Feature distribution changes significantly
+1. **Scheduled**: Weekly retraining with latest data
+2. **Performance Degradation**: MAE increases significantly
+3. **Data Drift**: Feature distributions shift
 4. **Manual**: On-demand retraining
 
 ## Model Improvements (Future)
 
-1. **Deep Learning**: LSTM, Transformer models
-2. **Multi-task Learning**: Predict sales, revenue, and profit simultaneously
-3. **Causal Inference**: Understand cause-and-effect relationships
-4. **Reinforcement Learning**: Dynamic pricing optimization
-5. **Personalization**: Per-merchant custom models
-6. **Real-time**: Online learning with streaming data
+1. **Deep Learning**: LSTM, Transformer models for complex patterns
+2. **External Data**: Integrate FRED API (GDP, inflation) and Yahoo Finance
+3. **Multi-task Learning**: Predict sales, revenue, and profit simultaneously
+4. **Personalization**: Per-merchant custom models
+5. **Online Learning**: Continuous adaptation with streaming data
+6. **Hyperparameter Tuning**: Bayesian optimization for XGBoost params
 
 ## References
 
 - XGBoost: Chen & Guestrin (2016)
-- Prophet: Taylor & Letham (2017)
-- Time Series Forecasting: Hyndman & Athanasopoulos (2021)
+- Exponential Smoothing: Hyndman & Athanasopoulos (2021), "Forecasting: Principles and Practice"
+- statsmodels: Seabold & Perktold (2010)
